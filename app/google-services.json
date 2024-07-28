@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "136668598580",
+    "project_id": "battleship-cs5520-group-11",
+    "storage_bucket": "battleship-cs5520-group-11.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:136668598580:android:fa4be11270c201e68bd561",
+        "android_client_info": {
+          "package_name": "edu.northeastern.finalprojectgroup11"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBipDT5adMBk7cA3FsOSXT7zv8zj6W9-Yg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
