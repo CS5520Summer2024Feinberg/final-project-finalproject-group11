@@ -13,6 +13,9 @@
         android:theme="@style/Theme.FinalProjectGroup11"
         tools:targetApi="31">
         <activity
+            android:name=".DeployActivity"
+            android:exported="false" />
+        <activity
             android:name=".GameActivity"
             android:exported="false" />
         <activity

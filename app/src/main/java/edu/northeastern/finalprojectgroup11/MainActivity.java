@@ -3,6 +3,7 @@ package edu.northeastern.finalprojectgroup11;
 import static android.content.ContentValues.TAG;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -235,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
                     String player2UID = snapshot.child("player2").getValue(String.class);
                     if (player2UID != null && !player2UID.isEmpty()) {
                         Toast.makeText(getApplicationContext(), "player 2 join, game should start", Toast.LENGTH_SHORT).show();
-                        // startGame(roomCode);
+                        startGame(roomCode);
                     }
                 }
             }
@@ -303,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
                 if (dataSnapshot.child("player1").exists() && dataSnapshot.child("player2").exists()) {
 
                     Toast.makeText(getApplicationContext(), "join success, should start game", Toast.LENGTH_SHORT).show();
-                    //startGame(roomCode);
+                    startGame(roomCode);
                 } else {
                     Toast.makeText(getApplicationContext(), "Room not found", Toast.LENGTH_SHORT).show();
                 }
@@ -314,6 +315,12 @@ public class MainActivity extends AppCompatActivity {
                 Log.w(TAG, "joinRoom:onCancelled", databaseError.toException());
             }
         });
+    }
+
+    private void startGame(String roomCode) {
+        Intent intent = new Intent(MainActivity.this, DeployActivity.class);
+        intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
+        startActivity(intent);
     }
 
 }
