@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference userStatusRef;
     private Button btnLogin;
     private String currentUID;
+    private DatabaseReference roomRef;
+    private ValueEventListener player2Join;
 
 
 
@@ -53,9 +55,20 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        // test button
+        Button btnTest = findViewById(R.id.test_btn);
+        btnTest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, dragDropDemo.class);
+                startActivity(intent);
+            }
+        });
+
+        //
+
         sharedPreferences = getSharedPreferences("Battleship", MODE_PRIVATE);
         currentUID = sharedPreferences.getString("UID", null);
-
 
         // Initialize Firebase Auth and Database
         mAuth = FirebaseAuth.getInstance();
@@ -219,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
     //
     private void createRoom() {
         String roomCode = generateRoomCode();  // Method to generate a unique room code
-        DatabaseReference roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+        roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
         roomRef.child("player1").setValue(currentUID);  // Save the current user's UID as player1
         roomRef.child("gameState").setValue("waiting"); // Set room state as waiting
 
@@ -227,8 +240,7 @@ public class MainActivity extends AppCompatActivity {
         showRoomCode(roomCode);
 
         // listener to detect player 2 join
-
-        roomRef.addValueEventListener(new ValueEventListener() {
+        player2Join = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
@@ -245,7 +257,8 @@ public class MainActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.w(TAG, "listenForPlayer2Join:onCancelled", error.toException());
             }
-        });
+        };
+        roomRef.addValueEventListener(player2Join);
 
     }
 
@@ -258,12 +271,25 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Room Created")
                 .setMessage("Share this code with your friend: " + roomCode)
-                .setPositiveButton("OK", null)
+                .setPositiveButton("quit", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        destroyRoom();
+                        dialog.cancel();
+                    }
+                })
                 .show();
     }
 
-    //join room
+    // Destroy room when player1 quit from create room
+    private void destroyRoom() {
+        if (roomRef != null) {
+            roomRef.removeValue();
+            roomRef = null;
+        }
+    }
 
+    //join room
     private void showJoinRoomDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
@@ -294,14 +320,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void joinRoom(String roomCode) {
-        DatabaseReference roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+        roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
         roomRef.child("player2").setValue(currentUID);  // Save the current user's UID as player2
 
         // Check if both players are present to start the game
         roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.child("player1").exists() && dataSnapshot.child("player2").exists()) {
+                if (dataSnapshot.child("player1").exists() && dataSnapshot.child("player2").exists() && dataSnapshot.child("gameState").getValue().equals("waiting") ) {
 
                     Toast.makeText(getApplicationContext(), "join success, should start game", Toast.LENGTH_SHORT).show();
                     startGame(roomCode);
@@ -318,6 +344,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startGame(String roomCode) {
+        roomRef.child("gameState").setValue("active"); // Set room state as active
+
+        // Remove listener for player 2 join
+        if (player2Join != null){
+            roomRef.removeEventListener(player2Join);
+        }
+
+        // start deploy activity
         Intent intent = new Intent(MainActivity.this, DeployActivity.class);
         intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
         startActivity(intent);
