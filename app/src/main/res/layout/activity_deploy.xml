@@ -7,14 +7,35 @@
     android:layout_height="match_parent"
     tools:context=".DeployActivity">
 
+    <TextView
+        android:id="@+id/dragTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:background="#FFC107"
+        android:padding="16dp"
+        android:text="boat"
+        android:textSize="22dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonReady"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <Button
         android:id="@+id/buttonReady"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ready"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:layout_editor_absoluteY="616dp" />
+        tools:layout_editor_absoluteX="160dp"
+        app:layout_constraintTop_toBottomOf="@+id/guideline" />
+
+    <Button
+        android:id="@+id/buttonQuit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quit"
+        app:layout_constraintTop_toBottomOf="@+id/buttonReady"
+
+        tools:layout_editor_absoluteX="160dp" />
 
     <TextView
         android:id="@+id/textViewRoom"
@@ -22,4 +43,74 @@
         android:layout_height="wrap_content"
         tools:layout_editor_absoluteX="62dp"
         tools:layout_editor_absoluteY="64dp" />
+
+    <GridLayout
+        android:id="@+id/gridLayout"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:columnCount="2"
+        android:padding="16dp"
+        android:rowCount="2">
+
+        <TextView
+            android:id="@+id/block_00"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_row="0"
+            android:layout_column="0"
+            android:layout_gravity="fill"
+            android:layout_margin="4dp"
+            android:background="#EEEEEE"
+            android:gravity="center"
+            android:text="[0,0]"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/block_01"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_row="0"
+            android:layout_column="1"
+            android:layout_gravity="fill"
+            android:layout_margin="4dp"
+            android:background="#EEEEEE"
+            android:gravity="center"
+            android:text="[0,1]"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/block_10"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_row="1"
+            android:layout_column="0"
+            android:layout_gravity="fill"
+            android:layout_margin="4dp"
+            android:background="#EEEEEE"
+            android:gravity="center"
+            android:text="[1,0]"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/block_11"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_row="1"
+            android:layout_column="1"
+            android:layout_gravity="fill"
+            android:layout_margin="4dp"
+            android:background="#EEEEEE"
+            android:gravity="center"
+            android:text="[1,1]"
+            android:textSize="18sp" />
+    </GridLayout>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="599dp" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
