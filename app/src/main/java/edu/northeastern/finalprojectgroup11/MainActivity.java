@@ -39,10 +39,6 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference roomRef;
     private ValueEventListener player2Join;
 
-
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // test button
         Button btnTest = findViewById(R.id.test_btn);
         btnTest.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //
 
         sharedPreferences = getSharedPreferences("Battleship", MODE_PRIVATE);
         currentUID = sharedPreferences.getString("UID", null);
@@ -146,13 +140,13 @@ public class MainActivity extends AppCompatActivity {
                         EditText usernameEditText = loginView.findViewById(R.id.username);
                         String username = usernameEditText.getText().toString().trim();
                         if (!username.isEmpty()) {
-                            signInAnonymously(username);
+                            checkIfUsernameExists(username);
                         } else {
                             Toast.makeText(MainActivity.this, "Please enter a username", Toast.LENGTH_SHORT).show();
                         }
                     }
                 })
-                .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -161,7 +155,32 @@ public class MainActivity extends AppCompatActivity {
 
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
 
+    private void checkIfUsernameExists(String username) {
+        DatabaseReference usersRef = firebaseDatabase.getReference("users");
+        usersRef.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    // Username exists, log in the user
+                    for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                        currentUID = userSnapshot.getKey();
+                        setUserOnlineStatus(currentUID, true);
+                        sharedPreferences.edit().putString("UID", currentUID).apply();
+                        btnLogin.setText(username);
+                    }
+                } else {
+                    // Username does not exist, create a new user
+                    signInAnonymously(username);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.w(TAG, "checkIfUsernameExists:onCancelled", databaseError.toException());
+            }
+        });
     }
 
     private void signInAnonymously(String username) {
@@ -172,8 +191,7 @@ public class MainActivity extends AppCompatActivity {
                         if (user != null) {
                             currentUID = user.getUid();
                             setUserOnlineStatus(user.getUid(), true);
-                            // Store username in the database
-                            firebaseDatabase.getReference("users").child(user.getUid()).child("username").setValue(username);
+                            storeUserData(user.getUid(), username);
                             btnLogin.setText(username);
                             sharedPreferences.edit().putString("UID", currentUID).apply();
                         }
@@ -182,6 +200,19 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void storeUserData(String uid, String username) {
+        DatabaseReference userRef = firebaseDatabase.getReference("users").child(uid);
+        userRef.child("username").setValue(username)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d(TAG, "User data stored successfully");
+                    } else {
+                        Log.w(TAG, "Failed to store user data", task.getException());
+                    }
+                });
+        userRef.child("status").setValue("online");
     }
 
     private void setUserOnlineStatus(String userId, boolean isOnline) {
@@ -247,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                     // Check if player2 has joined
                     String player2UID = snapshot.child("player2").getValue(String.class);
                     if (player2UID != null && !player2UID.isEmpty()) {
-                        Toast.makeText(getApplicationContext(), "player 2 join, game should start", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Player 2 joined, game should start", Toast.LENGTH_SHORT).show();
                         startGame(roomCode);
                     }
                 }
@@ -271,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Room Created")
                 .setMessage("Share this code with your friend: " + roomCode)
-                .setPositiveButton("quit", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Quit", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         destroyRoom();
