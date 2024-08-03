@@ -222,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
             userStatusRef.onDisconnect().setValue("offline");
         } else {
             userStatusRef.setValue("offline");
+            Log.d(TAG, "User status set to offline for UID: " + userId);
         }
     }
 
@@ -232,6 +233,7 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("Sign out", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        Log.d(TAG, "Sign out dialog confirmed");
                         signOut();
                     }
                 })
@@ -248,15 +250,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void signOut() {
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            setUserOnlineStatus(user.getUid(), false);
-            mAuth.signOut();
-            btnLogin.setText("Login");
-            sharedPreferences.edit().remove("UID").apply();
+        if (currentUID != null) {
+            if (user != null) {
+                mAuth.signOut();
+            }
+            setUserOnlineStatus(currentUID, false);
             currentUID = null;
-
+            sharedPreferences.edit().remove("UID").apply();
+            Log.d(TAG, "User signed out successfully");
+            btnLogin.setText("Login");
+        } else {
+            Log.d(TAG, "No user to sign out");
         }
+        Log.d(TAG, "currentUID after sign out: " + currentUID);
+        Log.d(TAG, "SharedPreferences UID after sign out: " + sharedPreferences.getString("UID", "null"));
     }
+
 
 
     //create room stuff
