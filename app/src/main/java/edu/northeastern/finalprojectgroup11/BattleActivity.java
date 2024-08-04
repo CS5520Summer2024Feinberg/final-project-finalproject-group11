@@ -5,15 +5,19 @@ import static android.content.ContentValues.TAG;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.GridLayout;
 import android.util.Log;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.DialogInterface;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.appcompat.app.AlertDialog;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -23,18 +27,22 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.Objects;
+import java.util.Random;
 
 public class BattleActivity extends AppCompatActivity {
     private FirebaseDatabase firebaseDatabase;
     private FirebaseAuth mAuth;
     private DatabaseReference roomRef;
     private String UID;
-    private String OppoentUID;
+    private String opponentUID;
     private String roomCode;
     private int boat1row;
     private int boat1col;
     private int playerPosition;
     private int currentTurn;
+
+    private TextView turnTextView;
+    private Button btnQuit;
 
 
     @Override
@@ -54,26 +62,46 @@ public class BattleActivity extends AppCompatActivity {
         Log.d(TAG, "Current UID: " + UID);
         Log.d(TAG, "Room code: " + roomCode);
 
-        // Get information of the opponent
+
+// Get information of the opponent
         roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-
                 // Get UID of the opponent
                 if (Objects.equals(snapshot.child("player1").getValue(String.class), UID)) {
                     playerPosition = 1;
-                    OppoentUID = snapshot.child("player2").getValue(String.class);
+                    opponentUID = snapshot.child("player2").getValue(String.class);
                 } else {
                     playerPosition = 2;
-                    OppoentUID = snapshot.child("player1").getValue(String.class);
+                    opponentUID = snapshot.child("player1").getValue(String.class);
                 }
 
-                Log.d(TAG, "Opponent UID: " + OppoentUID);
+                Log.d(TAG, "Opponent UID: " + opponentUID);
 
                 // Get opponent boat location
-                boat1row = snapshot.child("players").child(OppoentUID).child("boat1Location").child("row").getValue(Integer.class);
-                boat1col = snapshot.child("players").child(OppoentUID).child("boat1Location").child("col").getValue(Integer.class);
+                boat1row = snapshot.child("players").child(opponentUID).child("boat1Location").child("row").getValue(Integer.class);
+                boat1col = snapshot.child("players").child(opponentUID).child("boat1Location").child("col").getValue(Integer.class);
 
+                // Determine first turn based on UID
+                if (UID.compareTo(opponentUID) < 0) {
+                    roomRef.child("turn").setValue(1);
+                } else {
+                    roomRef.child("turn").setValue(2);
+                }
+
+                // Listen to turn changes
+                roomRef.child("turn").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        currentTurn = snapshot.getValue(Integer.class);
+                        updateTurnUI();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Failed to read turn data: " + error.getMessage());
+                    }
+                });
             }
 
             @Override
@@ -82,21 +110,28 @@ public class BattleActivity extends AppCompatActivity {
             }
         });
 
-        // determining who's turn
-        roomRef.child("turn").setValue(1);
+
+        // Initialize turnTextView
+        turnTextView = findViewById(R.id.turnTextView);
+
+        // Randomly determine who goes first
+        Random random = new Random();
+        int firstTurn = random.nextInt(2) + 1; // 1 or 2
+        roomRef.child("turn").setValue(firstTurn);
         roomRef.child("turn").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 currentTurn = snapshot.getValue(Integer.class);
+                updateTurnUI();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.e(TAG, "Failed to read turn data: " + error.getMessage());
             }
         });
 
-        // grid layout stuff
+        // Grid layout stuff
         GridLayout opponentGrid = findViewById(R.id.opponentGrid);
         for (int i = 0; i < opponentGrid.getChildCount(); i++) {
             View block = opponentGrid.getChildAt(i);
@@ -105,22 +140,137 @@ public class BattleActivity extends AppCompatActivity {
             block.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    // Current player select a block to hit
+                    // Current player selects a block to hit
                     if (currentTurn == playerPosition) {
                         if (row == boat1row && col == boat1col) {
                             v.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light));
-                            roomRef.child("turn").setValue(1+(currentTurn+2)%2);
                         } else {
                             v.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_dark));
-                            roomRef.child("turn").setValue(1+(currentTurn+2)%2);
                         }
+                        roomRef.child("turn").setValue(3 - currentTurn); // Switch turn
                     }
-
                 }
             });
         }
+        updateTurnUI();
 
-
+        // Quit button
+        btnQuit = findViewById(R.id.buttonQuit);
+        btnQuit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showQuitConfirmationDialog();
+            }
+        });
     }
+
+    private void updateTurnUI() {
+        GridLayout opponentGrid = findViewById(R.id.opponentGrid);
+        if (currentTurn == playerPosition) {
+            turnTextView.setText("Your Turn");
+            setGridEnabled(opponentGrid, true);
+        } else {
+            turnTextView.setText("Opponent's Turn");
+            setGridEnabled(opponentGrid, false);
+        }
+    }
+
+    private void setGridEnabled(GridLayout grid, boolean enabled) {
+        for (int i = 0; i < grid.getChildCount(); i++) {
+            grid.getChildAt(i).setEnabled(enabled);
+        }
+    }
+
+    private void showQuitConfirmationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Surrender")
+                .setMessage("Are you sure you want to surrender?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        quitGame();
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void quitGame() {
+        if (UID != null && roomRef != null) {
+            roomRef.child("players").child(UID).child("playerState").setValue("quit")
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            roomRef.child("players").child(opponentUID).child("playerState").setValue("winner")
+                                    .addOnCompleteListener(task1 -> {
+                                        if (task1.isSuccessful()) {
+                                            showQuitDialog();
+                                            notifyOpponent();
+                                        }
+                                    });
+                        }
+                    });
+        }
+    }
+
+    private void notifyOpponent() {
+        roomRef.child("players").child(opponentUID).child("playerState").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String state = snapshot.getValue(String.class);
+                if ("winner".equals(state)) {
+                    showOpponentWinnerDialog();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Failed to update player's state: " + error.getMessage());
+            }
+        });
+    }
+
+    private void showQuitDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("You Quit")
+                .setMessage("You have quit the game.")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        navigateToMainActivity();
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showOpponentWinnerDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Winner")
+                .setMessage("Congratulations! You are the winner!")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        navigateToMainActivity();
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void navigateToMainActivity() {
+        Intent intent = new Intent(BattleActivity.this, MainActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+
 }
