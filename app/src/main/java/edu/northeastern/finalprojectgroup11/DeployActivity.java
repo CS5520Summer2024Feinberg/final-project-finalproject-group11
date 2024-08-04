@@ -134,6 +134,10 @@ public class DeployActivity extends AppCompatActivity {
 
                 if (readyCount == 2) {
                     Toast.makeText(DeployActivity.this, "game should start.", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(DeployActivity.this, BattleActivity.class);
+                    intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
+                    startActivity(intent);
+
                 }
             }
 
@@ -183,10 +187,12 @@ public class DeployActivity extends AppCompatActivity {
                     // Convert location string "[row,col]" to List<Integer>
                     String[] parts = location.replaceAll("[\\[\\]]", "").split(",");
                     List<Integer> coordinates = new ArrayList<>();
-                    coordinates.add(Integer.parseInt(parts[0].trim()));
-                    coordinates.add(Integer.parseInt(parts[1].trim()));
+                    //coordinates.add(Integer.parseInt(parts[0].trim()));
+                    //coordinates.add(Integer.parseInt(parts[1].trim()));
                     // Update the boat location in the database
-                    roomRef.child("players").child(UID).child("boatLocation").setValue(coordinates);
+                    roomRef.child("players").child(UID).child("boat1Location").child("row").setValue(Integer.parseInt(parts[0].trim()));
+                    roomRef.child("players").child(UID).child("boat1Location").child("col").setValue(Integer.parseInt(parts[1].trim()));
+
                     return true;
 
 
