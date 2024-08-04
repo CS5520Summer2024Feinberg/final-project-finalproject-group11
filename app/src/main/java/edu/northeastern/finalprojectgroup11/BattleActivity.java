@@ -63,7 +63,8 @@ public class BattleActivity extends AppCompatActivity {
         Log.d(TAG, "Room code: " + roomCode);
 
 
-// Get information of the opponent
+        // Get information of the opponent
+        // Set winning notification when having opponent information
         roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -102,6 +103,32 @@ public class BattleActivity extends AppCompatActivity {
                         Log.e(TAG, "Failed to read turn data: " + error.getMessage());
                     }
                 });
+
+                //Notify winning when the opponent quit
+                Log.d(TAG, "Setting up ValueEventListener on opponent's playerState for opponentUID: " + opponentUID);
+                DatabaseReference playerStateRef = roomRef.child("players").child(opponentUID).child("playerState");
+                playerStateRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            String state = snapshot.getValue(String.class);
+                            Log.d(TAG, "Opponent's playerState: " + state);
+                            if ("quit".equals(state)) { // show you win if the other one quit first
+                                showYouWinDialog();
+                            }
+                        } else {
+                            Log.e(TAG, "DataSnapshot for playerState does not exist.");
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Failed to read player's state: " + error.getMessage());
+                    }
+                });
+
+
+
             }
 
             @Override
@@ -162,6 +189,7 @@ public class BattleActivity extends AppCompatActivity {
                 showQuitConfirmationDialog();
             }
         });
+
     }
 
     private void updateTurnUI() {
@@ -211,7 +239,6 @@ public class BattleActivity extends AppCompatActivity {
                                     .addOnCompleteListener(task1 -> {
                                         if (task1.isSuccessful()) {
                                             showQuitDialog();
-                                            notifyOpponent();
                                         }
                                     });
                         }
@@ -219,22 +246,9 @@ public class BattleActivity extends AppCompatActivity {
         }
     }
 
-    private void notifyOpponent() {
-        roomRef.child("players").child(opponentUID).child("playerState").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String state = snapshot.getValue(String.class);
-                if ("winner".equals(state)) {
-                    showOpponentWinnerDialog();
-                }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Failed to update player's state: " + error.getMessage());
-            }
-        });
-    }
+
+
 
     private void showQuitDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -251,7 +265,7 @@ public class BattleActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void showOpponentWinnerDialog() {
+    private void showYouWinDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Winner")
                 .setMessage("Congratulations! You are the winner!")
