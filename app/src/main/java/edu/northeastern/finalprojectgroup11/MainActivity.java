@@ -303,7 +303,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String generateRoomCode() {
-        return String.valueOf((int) (Math.random() * 10));  // Generate a random  number as room code
+        return String.valueOf((int) (Math.random() * 100));  // Generate a random  number as room code
     }
 
     private void showRoomCode(String roomCode) {
