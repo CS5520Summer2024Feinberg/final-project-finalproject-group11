@@ -70,7 +70,7 @@ public class BattleActivity extends AppCompatActivity {
                     roomRef.child("players").child(UID).child("playerState").setValue("quit");
                 }
             }
-        }, 5000); // 1000 milliseconds delay
+        }, 1000); // 1000 milliseconds delay
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,12 +96,15 @@ public class BattleActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // Get UID of the opponent
-                if (Objects.equals(snapshot.child("player1").getValue(String.class), UID)) {
+                DataSnapshot playersSnapshot = snapshot.child("players");
+                String firstPlayerUID = playersSnapshot.getChildren().iterator().next().getKey();
+
+                if (Objects.equals(firstPlayerUID, UID)) {
                     playerPosition = 1;
-                    opponentUID = snapshot.child("player2").getValue(String.class);
+                    opponentUID = playersSnapshot.getChildren().iterator().next().getKey();
                 } else {
                     playerPosition = 2;
-                    opponentUID = snapshot.child("player1").getValue(String.class);
+                    opponentUID = playersSnapshot.getChildren().iterator().next().getKey();
                 }
 
                 Log.d(TAG, "Opponent UID: " + opponentUID);
