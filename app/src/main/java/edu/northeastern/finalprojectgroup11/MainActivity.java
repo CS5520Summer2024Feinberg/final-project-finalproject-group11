@@ -377,6 +377,12 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
         roomDialog = builder.create();
+        roomDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                destroyRoom();
+            }
+        });
         roomDialog.show();
 
     }
