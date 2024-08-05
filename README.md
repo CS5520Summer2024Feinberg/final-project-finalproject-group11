@@ -14,9 +14,9 @@ https://github.com/CS5520Summer2024Feinberg/final-project-finalproject-group11
 ---
 
 #### Unfix bugs and issues:
-- Duplicate room number might be generated. 
+- ~~Duplicate room number might be generated.~~
 - Users can press "READY" without deployment. 
-- Users can go back without pressing "QUIT"
+- Users can go back without pressing "QUIT" in deployment stage.
 - When a user quit the deployment stage, he's opponent should be forced to quit with deletion of the room.
 - When the winner presses "OK" to head back to MainActivity before the loser, firebase automatically re-generates the room after deletion.
 - When a third user tries to enter a full room, player 2 will be logged out forcefully.

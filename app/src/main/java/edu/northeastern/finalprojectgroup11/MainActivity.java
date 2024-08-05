@@ -29,6 +29,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private FirebaseAuth mAuth;
@@ -40,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     private ValueEventListener player2Join;
 
     private AlertDialog roomDialog;
+
+    private static final int ROOM_CAPACITY = 100;
 
 
     @Override
@@ -272,46 +277,91 @@ public class MainActivity extends AppCompatActivity {
 
 
     //create room stuff
-    //
     private void createRoom() {
-        String roomCode = generateRoomCode();  // Method to generate a unique room code
-        roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
-        roomRef.child("player1").setValue(currentUID);  // Save the current user's UID as player1
-        roomRef.child("gameState").setValue("waiting"); // Set room state as waiting
-
-        // Show the room code to the user to share with a friend
-        showRoomCode(roomCode);
-
-        // listener to detect player 2 join
-        player2Join = new ValueEventListener() {
+        generateRoomCode(new RoomCodeCallback() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    // Check if player2 has joined
-                    String player2UID = snapshot.child("player2").getValue(String.class);
-                    if (player2UID != null && !player2UID.isEmpty()) {
-                        Toast.makeText(getApplicationContext(), "Player 2 joined, game should start", Toast.LENGTH_SHORT).show();
-                        if (roomDialog.isShowing() || roomDialog != null) {
-                            roomDialog.dismiss();
-                            roomDialog = null;
+            public void onRoomCodeGenerated(String roomCode) {
+                roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+                roomRef.child("player1").setValue(currentUID);  // Save the current user's UID as player1
+                roomRef.child("gameState").setValue("waiting"); // Set room state as waiting
+
+                // Show the room code to the user to share with a friend
+                showRoomCode(roomCode);
+
+                // listener to detect player 2 join
+                player2Join = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            // Check if player2 has joined
+                            String player2UID = snapshot.child("player2").getValue(String.class);
+                            if (player2UID != null && !player2UID.isEmpty()) {
+                                Toast.makeText(getApplicationContext(), "Player 2 joined, game should start", Toast.LENGTH_SHORT).show();
+                                if (roomDialog != null && roomDialog.isShowing()) {
+                                    roomDialog.dismiss();
+                                    roomDialog = null;
+                                }
+                                startGame(roomCode);
+                            }
                         }
-                        startGame(roomCode);
                     }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.w(TAG, "listenForPlayer2Join:onCancelled", error.toException());
+                    }
+                };
+                roomRef.addValueEventListener(player2Join);
+            }
+
+            @Override
+            public void onRoomCodeGenerationFailed() {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to generate a unique room code. Please try again.", Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
+    private void generateRoomCode(final RoomCodeCallback callback) {
+        roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<String> roomNumbers = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    roomNumbers.add(snapshot.getKey());
+                }
+
+                String roomNumber = null;
+                for (int i = 0; i < ROOM_CAPACITY; i++) {
+                    roomNumber = String.valueOf((int) (Math.random() * ROOM_CAPACITY));
+                    if (!roomNumbers.contains(roomNumber)) {
+                        break;
+                    } else {
+                        roomNumber = null;
+                    }
+                }
+
+                if (roomNumber != null) {
+                    callback.onRoomCodeGenerated(roomNumber);
+                } else {
+                    callback.onRoomCodeGenerationFailed();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.w(TAG, "listenForPlayer2Join:onCancelled", error.toException());
+                Log.e("MainActivity", "Database error: " + error.getMessage(), error.toException());
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "An error occurred while accessing the database. Please try again.", Toast.LENGTH_SHORT).show());
+                callback.onRoomCodeGenerationFailed();
             }
-        };
-        roomRef.addValueEventListener(player2Join);
-
+        });
     }
 
-    private String generateRoomCode() {
-        return String.valueOf((int) (Math.random() * 100));  // Generate a random  number as room code
+    public interface RoomCodeCallback {
+        void onRoomCodeGenerated(String uniqueRoomCode);
+        void onRoomCodeGenerationFailed();
     }
+
+
 
     private void showRoomCode(String roomCode) {
         // Display room code in a dialog or on the screen
