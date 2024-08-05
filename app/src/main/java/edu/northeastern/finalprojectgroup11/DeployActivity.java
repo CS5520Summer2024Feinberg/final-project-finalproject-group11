@@ -36,6 +36,20 @@ public class DeployActivity extends AppCompatActivity {
     private DatabaseReference roomRef;
     private TextView dragTextView;
 
+    private ValueEventListener bothReady;
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Remove event listener
+        if (bothReady != null) {
+            roomRef.child("players").removeEventListener(bothReady);
+        }
+
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,7 +88,7 @@ public class DeployActivity extends AppCompatActivity {
         });
 
         // Listener to check if both ready and enter battle
-        roomRef.child("players").addValueEventListener(new ValueEventListener() {
+        bothReady = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 checkReady(roomRef);
@@ -84,7 +98,8 @@ public class DeployActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(DeployActivity.this, "Failed to check players' status.", Toast.LENGTH_SHORT).show();
             }
-        });
+        };
+        roomRef.child("players").addValueEventListener(bothReady);
 
         // Button to quit game
         Button btnQuit = findViewById(R.id.buttonQuit);
@@ -137,6 +152,7 @@ public class DeployActivity extends AppCompatActivity {
                     Intent intent = new Intent(DeployActivity.this, BattleActivity.class);
                     intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
                     startActivity(intent);
+                    finish();
 
                 }
             }
