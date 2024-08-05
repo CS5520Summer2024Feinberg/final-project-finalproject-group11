@@ -39,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference roomRef;
     private ValueEventListener player2Join;
 
+    private AlertDialog roomDialog;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -288,6 +291,10 @@ public class MainActivity extends AppCompatActivity {
                     String player2UID = snapshot.child("player2").getValue(String.class);
                     if (player2UID != null && !player2UID.isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Player 2 joined, game should start", Toast.LENGTH_SHORT).show();
+                        if (roomDialog.isShowing() || roomDialog != null) {
+                            roomDialog.dismiss();
+                            roomDialog = null;
+                        }
                         startGame(roomCode);
                     }
                 }
@@ -317,8 +324,10 @@ public class MainActivity extends AppCompatActivity {
                         destroyRoom();
                         dialog.cancel();
                     }
-                })
-                .show();
+                });
+        roomDialog = builder.create();
+        roomDialog.show();
+
     }
 
     // Destroy room when player1 quit from create room

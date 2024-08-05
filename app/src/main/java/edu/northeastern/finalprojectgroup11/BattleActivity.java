@@ -4,6 +4,7 @@ import static android.content.ContentValues.TAG;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
@@ -41,10 +42,36 @@ public class BattleActivity extends AppCompatActivity {
     private int playerPosition;
     private int currentTurn;
 
+    private ValueEventListener turnListener;
+    private ValueEventListener opponentStateListener;
+
+
+
     private TextView turnTextView;
     private Button btnQuit;
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
+        // Remove listeners
+        if (turnListener != null) {
+            roomRef.child("turn").removeEventListener(turnListener);
+        }
+        if (opponentStateListener != null) {
+            roomRef.child("players").child(opponentUID).child("playerState").removeEventListener(opponentStateListener);
+        }
+
+        // Delay the execution of the code by 1 second (1000 milliseconds)
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (roomRef != null && UID != null) {
+                    roomRef.child("players").child(UID).child("playerState").setValue("quit");
+                }
+            }
+        }, 5000); // 1000 milliseconds delay
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,15 +110,8 @@ public class BattleActivity extends AppCompatActivity {
                 boat1row = snapshot.child("players").child(opponentUID).child("boat1Location").child("row").getValue(Integer.class);
                 boat1col = snapshot.child("players").child(opponentUID).child("boat1Location").child("col").getValue(Integer.class);
 
-                // Determine first turn based on UID
-                if (UID.compareTo(opponentUID) < 0) {
-                    roomRef.child("turn").setValue(1);
-                } else {
-                    roomRef.child("turn").setValue(2);
-                }
-
                 // Listen to turn changes
-                roomRef.child("turn").addValueEventListener(new ValueEventListener() {
+                turnListener = new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         currentTurn = snapshot.getValue(Integer.class);
@@ -102,12 +122,13 @@ public class BattleActivity extends AppCompatActivity {
                     public void onCancelled(@NonNull DatabaseError error) {
                         Log.e(TAG, "Failed to read turn data: " + error.getMessage());
                     }
-                });
+                };
+                roomRef.child("turn").addValueEventListener(turnListener);
 
                 //Notify winning when the opponent quit
                 Log.d(TAG, "Setting up ValueEventListener on opponent's playerState for opponentUID: " + opponentUID);
                 DatabaseReference playerStateRef = roomRef.child("players").child(opponentUID).child("playerState");
-                playerStateRef.addValueEventListener(new ValueEventListener() {
+                opponentStateListener = new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.exists()) {
@@ -125,8 +146,8 @@ public class BattleActivity extends AppCompatActivity {
                     public void onCancelled(@NonNull DatabaseError error) {
                         Log.e(TAG, "Failed to read player's state: " + error.getMessage());
                     }
-                });
-
+                };
+                playerStateRef.addValueEventListener(opponentStateListener);
 
 
             }
@@ -145,18 +166,6 @@ public class BattleActivity extends AppCompatActivity {
         Random random = new Random();
         int firstTurn = random.nextInt(2) + 1; // 1 or 2
         roomRef.child("turn").setValue(firstTurn);
-        roomRef.child("turn").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                currentTurn = snapshot.getValue(Integer.class);
-                updateTurnUI();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Failed to read turn data: " + error.getMessage());
-            }
-        });
 
         // Grid layout stuff
         GridLayout opponentGrid = findViewById(R.id.opponentGrid);
@@ -275,15 +284,17 @@ public class BattleActivity extends AppCompatActivity {
                         navigateToMainActivity();
                     }
                 });
-
         AlertDialog dialog = builder.create();
         dialog.show();
+
     }
 
     private void navigateToMainActivity() {
         Intent intent = new Intent(BattleActivity.this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
         finish();
+
     }
 
 
