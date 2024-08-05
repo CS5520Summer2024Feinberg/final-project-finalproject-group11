@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
         // Initialize Firebase Auth and Database
         mAuth = FirebaseAuth.getInstance();
         firebaseDatabase = FirebaseDatabase.getInstance();
+        roomRef = firebaseDatabase.getReference("rooms");
 
         // Check if user is logged in and update UI accordingly
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -384,7 +385,7 @@ public class MainActivity extends AppCompatActivity {
     private void destroyRoom() {
         if (roomRef != null) {
             roomRef.removeValue();
-            roomRef = null;
+            roomRef = firebaseDatabase.getReference("rooms");
         }
     }
 
