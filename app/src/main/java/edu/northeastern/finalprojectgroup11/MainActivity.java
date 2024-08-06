@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
 
     private AlertDialog roomDialog;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -276,6 +275,7 @@ public class MainActivity extends AppCompatActivity {
     //
     private void createRoom() {
         String roomCode = generateRoomCode();  // Method to generate a random room code
+
         // check if the newly created room code exist;
         firebaseDatabase.getReference("rooms").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -351,15 +351,18 @@ public class MainActivity extends AppCompatActivity {
                         destroyRoom();
                         dialog.cancel();
                     }
-                });
+                })
+                .setCancelable(false);
+
         roomDialog = builder.create();
+
         roomDialog.show();
 
     }
 
     // Destroy room when player1 quit from create room
     private void destroyRoom() {
-        if (player2Join != null){
+        if (player2Join != null) {
             roomRef.removeEventListener(player2Join);
         }
 
