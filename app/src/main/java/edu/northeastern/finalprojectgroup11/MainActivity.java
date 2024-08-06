@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnLogin;
     private String currentUID;
     private DatabaseReference roomRef;
+    private final int maxRoomCount = 2;
     private ValueEventListener player2Join;
 
     private AlertDialog roomDialog;
@@ -274,43 +275,68 @@ public class MainActivity extends AppCompatActivity {
     //create room stuff
     //
     private void createRoom() {
-        String roomCode = generateRoomCode();  // Method to generate a unique room code
-        roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
-        roomRef.child("player1").setValue(currentUID);  // Save the current user's UID as player1
-        roomRef.child("gameState").setValue("waiting"); // Set room state as waiting
-
-        // Show the room code to the user to share with a friend
-        showRoomCode(roomCode);
-
-        // listener to detect player 2 join
-        player2Join = new ValueEventListener() {
+        String roomCode = generateRoomCode();  // Method to generate a random room code
+        // check if the newly created room code exist;
+        firebaseDatabase.getReference("rooms").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    // Check if player2 has joined
-                    String player2UID = snapshot.child("player2").getValue(String.class);
-                    if (player2UID != null && !player2UID.isEmpty()) {
-                        Toast.makeText(getApplicationContext(), "Player 2 joined, game should start", Toast.LENGTH_SHORT).show();
-                        if (roomDialog.isShowing() || roomDialog != null) {
-                            roomDialog.dismiss();
-                            roomDialog = null;
+                // If the server is full
+                if (snapshot.getChildrenCount() == maxRoomCount) {
+                    Toast.makeText(getApplicationContext(), "Game server is full, try later", Toast.LENGTH_LONG).show();
+                }
+
+                // if the room code is unique
+                if (!snapshot.hasChild(roomCode)) {
+                    // do the create room and show dialog stuff
+                    roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+                    roomRef.child("player1").setValue(currentUID);  // Save the current user's UID as player1
+                    roomRef.child("gameState").setValue("waiting"); // Set room state as waiting
+
+                    // Show the room code to the user to share with a friend
+                    showRoomCode(roomCode);
+
+                    // listener to detect player 2 join
+                    player2Join = new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                // Check if player2 has joined
+                                String player2UID = snapshot.child("player2").getValue(String.class);
+                                if (player2UID != null && !player2UID.isEmpty()) {
+                                    Toast.makeText(getApplicationContext(), "Player 2 joined, game should start", Toast.LENGTH_SHORT).show();
+                                    if (roomDialog.isShowing() || roomDialog != null) {
+                                        roomDialog.dismiss();
+                                        roomDialog = null;
+                                    }
+                                    startGame(roomCode);
+                                }
+                            }
                         }
-                        startGame(roomCode);
-                    }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.w(TAG, "listenForPlayer2Join:onCancelled", error.toException());
+                        }
+                    };
+                    roomRef.addValueEventListener(player2Join);
+                } else {
+                    // else keep create other number
+                    createRoom();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.w(TAG, "listenForPlayer2Join:onCancelled", error.toException());
+
             }
-        };
-        roomRef.addValueEventListener(player2Join);
+        });
+
+
 
     }
 
     private String generateRoomCode() {
-        return String.valueOf((int) (Math.random() * 100));  // Generate a random  number as room code
+        return String.valueOf((int) (Math.random() * maxRoomCount));  // Generate a random  number as room code
     }
 
     private void showRoomCode(String roomCode) {
@@ -332,6 +358,10 @@ public class MainActivity extends AppCompatActivity {
 
     // Destroy room when player1 quit from create room
     private void destroyRoom() {
+        if (player2Join != null){
+            roomRef.removeEventListener(player2Join);
+        }
+
         if (roomRef != null) {
             roomRef.removeValue();
             roomRef = null;
@@ -369,27 +399,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void joinRoom(String roomCode) {
-        roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
-        roomRef.child("player2").setValue(currentUID);  // Save the current user's UID as player2
-
-        // Check if both players are present to start the game
-        roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        // use a listener to check if roomcode exist or not
+        firebaseDatabase.getReference("rooms").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.child("player1").exists() && dataSnapshot.child("player2").exists() && dataSnapshot.child("gameState").getValue().equals("waiting") ) {
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // only join room if room exist
+                if (snapshot.hasChild(roomCode)) {
+                    roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+                    roomRef.child("player2").setValue(currentUID);  // Save the current user's UID as player2
 
-                    Toast.makeText(getApplicationContext(), "join success, should start game", Toast.LENGTH_SHORT).show();
-                    startGame(roomCode);
+                    // Check if both players are present to start the game
+                    roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.child("player1").exists() && dataSnapshot.child("player2").exists() && dataSnapshot.child("gameState").getValue().equals("waiting") ) {
+
+                                Toast.makeText(getApplicationContext(), "join success, should start game", Toast.LENGTH_SHORT).show();
+                                startGame(roomCode);
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Room is full", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                            Log.w(TAG, "joinRoom:onCancelled", databaseError.toException());
+                        }
+                    });
                 } else {
+                    //else shoe room not found
                     Toast.makeText(getApplicationContext(), "Room not found", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.w(TAG, "joinRoom:onCancelled", databaseError.toException());
+            public void onCancelled(@NonNull DatabaseError error) {
+
             }
         });
+
+
+
+
     }
 
     private void startGame(String roomCode) {
