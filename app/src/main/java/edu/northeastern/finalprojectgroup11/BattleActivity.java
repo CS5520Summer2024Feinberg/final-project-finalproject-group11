@@ -15,6 +15,8 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.DialogInterface;
+
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -125,7 +127,7 @@ public class BattleActivity extends AppCompatActivity {
                 };
                 roomRef.child("turn").addValueEventListener(turnListener);
 
-                //Notify winning when the opponent quit
+                //Notify winning when the opponent lose/quit
                 Log.d(TAG, "Setting up ValueEventListener on opponent's playerState for opponentUID: " + opponentUID);
                 DatabaseReference playerStateRef = roomRef.child("players").child(opponentUID).child("playerState");
                 opponentStateListener = new ValueEventListener() {
@@ -134,7 +136,7 @@ public class BattleActivity extends AppCompatActivity {
                         if (snapshot.exists()) {
                             String state = snapshot.getValue(String.class);
                             Log.d(TAG, "Opponent's playerState: " + state);
-                            if ("quit".equals(state)) { // show you win if the other one quit first
+                            if ("lose".equals(state)) { // show you win if the other one lose
                                 showYouWinDialog();
                             }
                         } else {
@@ -179,9 +181,9 @@ public class BattleActivity extends AppCompatActivity {
                     // Current player selects a block to hit
                     if (currentTurn == playerPosition) {
                         if (row == boat1row && col == boat1col) {
-                            v.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light));
+                            v.setBackgroundColor(ContextCompat.getColor(BattleActivity.this, android.R.color.holo_red_light));
                         } else {
-                            v.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_dark));
+                            v.setBackgroundColor(ContextCompat.getColor(BattleActivity.this, android.R.color.holo_blue_dark));
                         }
                         roomRef.child("turn").setValue(3 - currentTurn); // Switch turn
                     }
@@ -241,13 +243,13 @@ public class BattleActivity extends AppCompatActivity {
 
     private void quitGame() {
         if (UID != null && roomRef != null) {
-            roomRef.child("players").child(UID).child("playerState").setValue("quit")
+            roomRef.child("players").child(UID).child("playerState").setValue("lose")
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            roomRef.child("players").child(opponentUID).child("playerState").setValue("winner")
+                            roomRef.child("players").child(opponentUID).child("playerState").setValue("win")
                                     .addOnCompleteListener(task1 -> {
                                         if (task1.isSuccessful()) {
-                                            showQuitDialog();
+                                            showLoseDialog();
                                         }
                                     });
                         }
@@ -255,18 +257,14 @@ public class BattleActivity extends AppCompatActivity {
         }
     }
 
-
-
-
-
-    private void showQuitDialog() {
+    private void showLoseDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("You Quit")
-                .setMessage("You have quit the game.")
+        builder.setTitle("You Lose")
+                .setMessage("You have lost the game.")
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        navigateToMainActivity();
+                        navigateToMain();
                     }
                 });
 
@@ -281,20 +279,17 @@ public class BattleActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        navigateToMainActivity();
+                        navigateToMain();
                     }
                 });
         AlertDialog dialog = builder.create();
         dialog.show();
-
     }
 
-    private void navigateToMainActivity() {
+    private void navigateToMain() {
         Intent intent = new Intent(BattleActivity.this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
         finish();
-
     }
 
 
