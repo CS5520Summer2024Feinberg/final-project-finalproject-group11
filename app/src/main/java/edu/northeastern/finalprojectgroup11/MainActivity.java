@@ -29,6 +29,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Random;
+
 public class MainActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private FirebaseAuth mAuth;
@@ -337,7 +341,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String generateRoomCode() {
-        return String.valueOf((int) (Math.random() * maxRoomCount));  // Generate a random  number as room code
+        // Get the current time in seconds
+        long currentTimeSeconds = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
+
+        // Use the current time in seconds as a seed to generate a random number
+        Random random = new Random(currentTimeSeconds);
+        return String.valueOf((int) (random.nextInt(9000) + 1000));  // Generate a four-digit random number
     }
 
     private void showRoomCode(String roomCode) {
