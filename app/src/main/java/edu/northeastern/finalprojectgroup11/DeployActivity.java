@@ -1,8 +1,11 @@
 package edu.northeastern.finalprojectgroup11;
 
 import android.content.ClipData;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.View;
 import android.widget.Button;
@@ -12,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -26,17 +30,21 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class DeployActivity extends AppCompatActivity {
+    private String TAG = "DeployActivity";
     private FirebaseDatabase firebaseDatabase;
     private FirebaseAuth mAuth;
 
     private String roomCode;
     private String UID;
+    private String opponentUID;
     private DatabaseReference roomRef;
     private TextView dragTextView;
 
     private ValueEventListener bothReady;
+    private ValueEventListener opponentStateListener;
 
     @Override
     protected void onDestroy() {
@@ -46,7 +54,19 @@ public class DeployActivity extends AppCompatActivity {
         if (bothReady != null) {
             roomRef.child("players").removeEventListener(bothReady);
         }
+        if (opponentStateListener != null) {
+            roomRef.child("players").child(opponentUID).child("playerState").removeEventListener(opponentStateListener);
+        }
 
+        // Delay the execution of the code by 1 second (1000 milliseconds)
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (roomRef != null && UID != null) {
+                    roomRef.child("players").child(UID).child("playerState").setValue("quit");
+                }
+            }
+        }, 5000); // 1000 milliseconds delay
     }
 
 
@@ -106,7 +126,7 @@ public class DeployActivity extends AppCompatActivity {
         btnQuit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                quitGame();
+                showQuitConfirmationDialog();
             }
         });
 
@@ -130,6 +150,43 @@ public class DeployActivity extends AppCompatActivity {
             View block = gridLayout.getChildAt(i);
             block.setOnDragListener(new DeployActivity.MyDragListener());
         }
+
+        // Get information of the opponent
+        roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Get UID of the opponent
+                if (Objects.equals(snapshot.child("player1").getValue(String.class), UID)) {
+                    opponentUID = snapshot.child("player2").getValue(String.class);
+                } else {
+                    opponentUID = snapshot.child("player1").getValue(String.class);
+                }
+
+                // Listen to opponent's state changes
+                DatabaseReference opponentStateRef = roomRef.child("players").child(opponentUID).child("playerState");
+                opponentStateListener = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String state = snapshot.getValue(String.class);
+                        if ("lose".equals(state)) {
+                            showYouWinDialog();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Failed to read opponent's state: " + error.getMessage());
+                    }
+                };
+                opponentStateRef.addValueEventListener(opponentStateListener);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Database error: " + error.getMessage());
+            }
+        });
+
     }
 
     // Check if both players are ready and start game activity if ready
@@ -164,14 +221,41 @@ public class DeployActivity extends AppCompatActivity {
         });
     }
 
-    // Linked to quit button to surrender
+    private void showQuitConfirmationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Quit")
+                .setMessage("Are you sure you want to quit the game?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        quitGame();
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
     private void quitGame() {
         if (UID != null && roomRef != null) {
-            roomRef.child("players").child(UID).child("playerState").setValue("quit");
+            roomRef.child("players").child(UID).child("playerState").setValue("lose")
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            roomRef.child("players").child(opponentUID).child("playerState").setValue("win")
+                                    .addOnCompleteListener(task1 -> {
+                                        if (task1.isSuccessful()) {
+                                            showLoseDialog();
+                                        }
+                                    });
+                        }
+                    });
         }
-        Intent intent = new Intent(DeployActivity.this, MainActivity.class);
-        startActivity(intent);
-        finish();
     }
 
     private class MyDragListener implements View.OnDragListener {
@@ -221,5 +305,37 @@ public class DeployActivity extends AppCompatActivity {
             }
             return false;
         }
+    }
+    private void showLoseDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("You Lose")
+                .setMessage("You have lost the game.")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        navigateToMain();
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+    private void showYouWinDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Winner")
+                .setMessage("Congratulations! You are the winner!")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        navigateToMain();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+    private void navigateToMain() {
+        Intent intent = new Intent(DeployActivity.this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 }
