@@ -321,7 +321,8 @@ public class MainActivity extends AppCompatActivity {
                     roomRef.addValueEventListener(player2Join);
                 } else {
                     // else keep create other number
-                    createRoom();
+                    Toast.makeText(getApplicationContext(), "repeat number", Toast.LENGTH_SHORT).show();
+                    //createRoom();
                 }
             }
 
@@ -406,14 +407,13 @@ public class MainActivity extends AppCompatActivity {
                 // only join room if room exist
                 if (snapshot.hasChild(roomCode)) {
                     roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
-                    roomRef.child("player2").setValue(currentUID);  // Save the current user's UID as player2
 
                     // Check if both players are present to start the game
                     roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.child("player1").exists() && dataSnapshot.child("player2").exists() && dataSnapshot.child("gameState").getValue().equals("waiting") ) {
-
+                            if (dataSnapshot.child("player1").exists() && dataSnapshot.child("gameState").getValue().equals("waiting") ) {
+                                roomRef.child("player2").setValue(currentUID);  // Save the current user's UID as player2
                                 Toast.makeText(getApplicationContext(), "join success, should start game", Toast.LENGTH_SHORT).show();
                                 startGame(roomCode);
                             } else {
