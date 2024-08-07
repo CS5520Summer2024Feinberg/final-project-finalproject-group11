@@ -22,6 +22,9 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -77,40 +80,20 @@ public class MainActivity extends AppCompatActivity {
 
         // Check if user is logged in and update UI accordingly
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUID != null) {
+        if (currentUser == null) {
+            signInAnonymously();
+        } else {
+            currentUID = currentUser.getUid();
             setUserOnlineStatus(currentUID, true);
-            DatabaseReference usernameRef = firebaseDatabase.getReference("users")
-                    .child(currentUID)
-                    .child("username");
-            usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    // Get the username as a String
-                    String username = dataSnapshot.getValue(String.class);
-                    if (username != null) {
-                        // Set the button text to the username
-                        btnLogin.setText(username);
-                    } else {
-                        // Handle the case where username is not available
-                        btnLogin.setText("User");
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    // Handle potential errors here
-                    Log.w("TAG", "Failed to read username.");
-                }
-            });
+            updateUsernameUI();
         }
-
 
         btnLogin = findViewById(R.id.login_btn);
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (currentUID != null) {
-                    showSignOutDialog();
+                    checkIfGuestAndShowLoginDialog();
                 } else {
                     showLoginDialog();
                 }
@@ -134,22 +117,177 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    //show the login dialog when press login button
+    private void signInAnonymously() {
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            currentUID = user.getUid();
+                            String guestUsername = "Guest" + new Random().nextInt(1000);
+                            setUserOnlineStatus(user.getUid(), true);
+                            storeUserData(user.getUid(), guestUsername, true);  // Store user data with isGuest as true
+                            sharedPreferences.edit().putString("UID", currentUID).apply();
+                            updateUsernameUI();  // Update the UI with the username
+                        }
+                    } else {
+                        Log.w(TAG, "signInAnonymously:failure", task.getException());
+                        Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+
+    private void updateUsernameUI() {
+        DatabaseReference usernameRef = firebaseDatabase.getReference("users")
+                .child(currentUID)
+                .child("username");
+        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // Get the username as a String
+                String username = dataSnapshot.getValue(String.class);
+                if (username != null) {
+                    // Set the button text to the username
+                    btnLogin.setText(username);
+                } else {
+                    // Handle the case where username is not available
+                    btnLogin.setText("User");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle potential errors here
+                Log.w("TAG", "Failed to read username.");
+            }
+        });
+    }
+
+    private void checkIfGuestAndShowLoginDialog() {
+        DatabaseReference userRef = firebaseDatabase.getReference("users").child(currentUID);
+        userRef.child("isGuest").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Boolean isGuest = snapshot.getValue(Boolean.class);
+                if (isGuest != null && isGuest) {
+                    showGuestLoginDialog();
+                } else {
+                    showUserOptionsDialog();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Failed to check if user is guest: " + error.getMessage());
+            }
+        });
+    }
+    private void showUserOptionsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View optionsView = inflater.inflate(R.layout.dialog_user_options, null);
+        builder.setView(optionsView);
+
+        EditText usernameEditText = optionsView.findViewById(R.id.username);
+        Button btnSaveUsername = optionsView.findViewById(R.id.btnSaveUsername);
+        Button btnSignOut = optionsView.findViewById(R.id.btnSignOut);
+
+        // Pre-fill the EditText with the current username
+        DatabaseReference usernameRef = firebaseDatabase.getReference("users")
+                .child(currentUID)
+                .child("username");
+        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String currentUsername = snapshot.getValue(String.class);
+                if (currentUsername != null) {
+                    usernameEditText.setText(currentUsername);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.w(TAG, "Failed to read current username.", error.toException());
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+
+        btnSaveUsername.setOnClickListener(v -> {
+            String newUsername = usernameEditText.getText().toString().trim();
+            if (!newUsername.isEmpty()) {
+                updateUsername(newUsername);
+                dialog.dismiss();
+            } else {
+                Toast.makeText(MainActivity.this, "Username cannot be empty.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnSignOut.setOnClickListener(v -> {
+            dialog.dismiss();
+            showSignOutDialog();
+        });
+
+        dialog.show();
+    }
+    private void updateUsername(String newUsername) {
+        DatabaseReference usernameRef = firebaseDatabase.getReference("users")
+                .child(currentUID)
+                .child("username");
+
+        usernameRef.setValue(newUsername).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Toast.makeText(MainActivity.this, "Username updated successfully", Toast.LENGTH_SHORT).show();
+                updateUsernameUI();  // Update the UI with the new username
+            } else {
+                Toast.makeText(MainActivity.this, "Failed to update username", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private void showGuestLoginDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Guest Account")
+                .setMessage("You are currently using a guest account. Do you want to log in?")
+                .setPositiveButton("Log in", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showLoginDialog();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setCancelable(false);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
     private void showLoginDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
         View loginView = inflater.inflate(R.layout.dialog_signin, null);
         builder.setView(loginView)
-                .setPositiveButton("Sign in", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Login/Register", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // sign in though firebase
-                        EditText usernameEditText = loginView.findViewById(R.id.username);
-                        String username = usernameEditText.getText().toString().trim();
-                        if (!username.isEmpty()) {
-                            checkIfUsernameExists(username);
+                        EditText emailEditText = loginView.findViewById(R.id.email);
+                        EditText passwordEditText = loginView.findViewById(R.id.password);
+                        String email = emailEditText.getText().toString().trim();
+                        String password = passwordEditText.getText().toString().trim();
+
+                        if (!isValidEmail(email)) {
+                            Toast.makeText(MainActivity.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+                        } else if (password.length() < 6) {
+                            Toast.makeText(MainActivity.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(MainActivity.this, "Please enter a username", Toast.LENGTH_SHORT).show();
+                            setGuestOffline();
+                            signInWithEmail(email, password);
                         }
                     }
                 })
@@ -165,61 +303,70 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void checkIfUsernameExists(String username) {
-        DatabaseReference usersRef = firebaseDatabase.getReference("users");
-        usersRef.orderByChild("username").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    // Username exists, log in the user
-                    for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        currentUID = userSnapshot.getKey();
-                        setUserOnlineStatus(currentUID, true);
-                        sharedPreferences.edit().putString("UID", currentUID).apply();
-                        btnLogin.setText(username);
-                    }
-                } else {
-                    // Username does not exist, create a new user
-                    signInAnonymously(username);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.w(TAG, "checkIfUsernameExists:onCancelled", databaseError.toException());
-            }
-        });
+    private void setGuestOffline() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null && user.isAnonymous()) {
+            DatabaseReference guestRef = firebaseDatabase.getReference("users").child(user.getUid()).child("status");
+            guestRef.setValue("offline");
+        }
     }
 
-    private void signInAnonymously(String username) {
-        mAuth.signInAnonymously()
+    private void signInWithEmail(String email, String password) {
+        mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             currentUID = user.getUid();
                             setUserOnlineStatus(user.getUid(), true);
-                            storeUserData(user.getUid(), username);
-                            btnLogin.setText(username);
+                            updateUsernameUI();
                             sharedPreferences.edit().putString("UID", currentUID).apply();
+                            Toast.makeText(MainActivity.this, "Successful login", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Log.w(TAG, "signInAnonymously:failure", task.getException());
-                        Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        if (task.getException() instanceof FirebaseAuthInvalidUserException || task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
+                            // If sign-in fails, attempt to register the user
+                            registerWithEmail(email, password);
+                        } else {
+                            Log.w(TAG, "signInWithEmail:failure", task.getException());
+                            Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
     }
 
-    private void storeUserData(String uid, String username) {
-        DatabaseReference userRef = firebaseDatabase.getReference("users").child(uid);
-        userRef.child("username").setValue(username)
-                .addOnCompleteListener(task -> {
+    private void registerWithEmail(String email, String password) {
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        Log.d(TAG, "User data stored successfully");
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            currentUID = user.getUid();
+                            String defaultUsername = "User" + new Random().nextInt(1000);
+                            setUserOnlineStatus(user.getUid(), true);
+                            storeUserData(user.getUid(), defaultUsername, false); // Store the user data with isGuest as false
+                            sharedPreferences.edit().putString("UID", currentUID).apply();
+                            updateUsernameUI(); // Update the UI with the username
+                            Toast.makeText(MainActivity.this, "Successful registration", Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-                        Log.w(TAG, "Failed to store user data", task.getException());
+                        if (task.getException() instanceof FirebaseAuthUserCollisionException) {
+                            // If registration fails due to an existing user
+                            Toast.makeText(MainActivity.this, "Wrong password. Please try again.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Log.w(TAG, "registerWithEmail:failure", task.getException());
+                            Toast.makeText(MainActivity.this, "Registration failed.", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
+    }
+
+
+
+    private void storeUserData(String uid, String username, boolean isGuest) {
+        DatabaseReference userRef = firebaseDatabase.getReference("users").child(uid);
+        userRef.child("username").setValue(username);
+        userRef.child("isGuest").setValue(isGuest);
         userRef.child("status").setValue("online");
     }
 
@@ -233,6 +380,9 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "User status set to offline for UID: " + userId);
         }
     }
+
+
+
 
     private void showSignOutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -267,7 +417,9 @@ public class MainActivity extends AppCompatActivity {
             currentUID = null;
             sharedPreferences.edit().remove("UID").apply();
             Log.d(TAG, "User signed out successfully");
-            btnLogin.setText("Login");
+            Toast.makeText(MainActivity.this, "Signed out successfully", Toast.LENGTH_SHORT).show();
+            // Automatically sign in as a guest after signing out
+            signInAnonymously();
         } else {
             Log.d(TAG, "No user to sign out");
         }
@@ -470,6 +622,9 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, DeployActivity.class);
         intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
         startActivity(intent);
+    }
+    private boolean isValidEmail(String email) {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
 }

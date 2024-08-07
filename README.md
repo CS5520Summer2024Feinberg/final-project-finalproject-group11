@@ -28,4 +28,4 @@ https://github.com/CS5520Summer2024Feinberg/final-project-finalproject-group11
 
 #### Undone feature:
 - During deployment and battle stage, actions should be done automatically when time's up.
-- Log-in issue.
+- ~~Log-in issue.~~
