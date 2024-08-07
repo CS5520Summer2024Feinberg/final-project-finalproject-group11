@@ -266,7 +266,8 @@ public class DeployActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
-                });
+                })
+                .setCancelable(false);
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -348,7 +349,8 @@ public class DeployActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         navigateToMain();
                     }
-                });
+                })
+                .setCancelable(false);
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -362,7 +364,8 @@ public class DeployActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         navigateToMain();
                     }
-                });
+                })
+                .setCancelable(false);
         AlertDialog dialog = builder.create();
         dialog.show();
     }

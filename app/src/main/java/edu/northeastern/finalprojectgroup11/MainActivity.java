@@ -158,7 +158,8 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
                     }
-                });
+                })
+                .setCancelable(false);
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -249,7 +250,8 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss(); // Dismiss the dialog
                     }
-                });
+                })
+                .setCancelable(false);
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -405,7 +407,8 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
-                });
+                })
+                .setCancelable(false);
 
         AlertDialog dialog = builder.create();
         dialog.show();
