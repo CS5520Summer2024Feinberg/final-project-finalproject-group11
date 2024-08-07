@@ -17,6 +17,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -42,9 +43,12 @@ public class DeployActivity extends AppCompatActivity {
     private String opponentUID;
     private DatabaseReference roomRef;
     private TextView dragTextView;
+    Button btnReady;
 
     private ValueEventListener bothReady;
     private ValueEventListener opponentStateListener;
+
+    private boolean isBoatPlaced = false;
 
     @Override
     protected void onDestroy() {
@@ -58,15 +62,29 @@ public class DeployActivity extends AppCompatActivity {
             roomRef.child("players").child(opponentUID).child("playerState").removeEventListener(opponentStateListener);
         }
 
-        // Delay the execution of the code by 1 second (1000 milliseconds)
+        // Delay the execution of the code by 5 second
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 if (roomRef != null && UID != null) {
-                    roomRef.child("players").child(UID).child("playerState").setValue("quit");
+                    // Check the current state of the user
+                    roomRef.child("players").child(UID).child("playerState").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            String currentState = snapshot.getValue(String.class);
+                            if ("win".equals(currentState) || "lose".equals(currentState)) {
+                                roomRef.child("players").child(UID).child("playerState").setValue("quit");
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e(TAG, "Failed to read player's state: " + error.getMessage());
+                        }
+                    });
                 }
             }
-        }, 5000); // 1000 milliseconds delay
+        }, 5000); // 5000 milliseconds delay
     }
 
 
@@ -99,12 +117,16 @@ public class DeployActivity extends AppCompatActivity {
         roomRef.child("players").child(UID).child("playerState").setValue("deploying");
 
         // Button to set ready
-        Button btnReady = findViewById(R.id.buttonReady);
+        btnReady = findViewById(R.id.buttonReady);
+        btnReady.setEnabled(false);
         btnReady.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                roomRef.child("players").child(UID).child("playerState").setValue("ready");
-            }
+                if (isBoatPlaced) {
+                    roomRef.child("players").child(UID).child("playerState").setValue("ready");
+                } else {
+                    Toast.makeText(DeployActivity.this, "Please place the boat on the grid before readying up.", Toast.LENGTH_SHORT).show();
+                }            }
         });
 
         // Listener to check if both ready and enter battle
@@ -293,11 +315,14 @@ public class DeployActivity extends AppCompatActivity {
                     roomRef.child("players").child(UID).child("boat1Location").child("row").setValue(Integer.parseInt(parts[0].trim()));
                     roomRef.child("players").child(UID).child("boat1Location").child("col").setValue(Integer.parseInt(parts[1].trim()));
 
+                    isBoatPlaced = true;
+                    btnReady.setEnabled(true);
+
                     return true;
 
 
                 case DragEvent.ACTION_DRAG_ENDED:
-                    v.setBackgroundColor(getResources().getColor(android.R.color.darker_gray)); // Revert the highlight
+                    v.setBackgroundColor(ContextCompat.getColor(DeployActivity.this, android.R.color.darker_gray)); // Revert the highlight
                     return true;
 
                 default:
