@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,6 +50,7 @@ public class DeployActivity extends AppCompatActivity {
     private ValueEventListener opponentStateListener;
 
     private boolean isBoatPlaced = false;
+
 
     @Override
     protected void onDestroy() {
@@ -98,7 +100,13 @@ public class DeployActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
+        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showQuitConfirmationDialog(); // Show the same quit confirmation dialog
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, callback);
         // Retrieve room code
         Intent intent = getIntent();
         roomCode = intent.getStringExtra("roomCode");

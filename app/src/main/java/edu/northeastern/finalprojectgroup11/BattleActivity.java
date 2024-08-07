@@ -12,6 +12,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.DialogInterface;
@@ -78,7 +79,13 @@ public class BattleActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_battle);
-
+        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showQuitConfirmationDialog(); // Show the same quit confirmation dialog
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, callback);
         // Retrieve room code
         Intent intent = getIntent();
         roomCode = intent.getStringExtra("roomCode");
