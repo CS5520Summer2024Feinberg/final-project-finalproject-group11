@@ -26,7 +26,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/play_btn"
+        android:layout_width="270dp"
+        android:layout_height="80dp"
+        android:text="Play"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteY="507dp"
         app:layout_constraintVertical_bias="0.6" />
 
     <Button
@@ -44,18 +55,20 @@
         android:id="@+id/joinRoom_btn"
         android:layout_width="201dp"
         android:layout_height="58dp"
+        android:layout_marginTop="12dp"
         android:text="Join Game"
-        app:layout_constraintTop_toBottomOf="@+id/createRoom_btn"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/createRoom_btn" />
 
     <Button
         android:id="@+id/test_btn"
         android:layout_width="201dp"
         android:layout_height="58dp"
+        android:layout_marginTop="44dp"
         android:text="test stuff"
-        app:layout_constraintTop_toBottomOf="@+id/joinRoom_btn"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/joinRoom_btn" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

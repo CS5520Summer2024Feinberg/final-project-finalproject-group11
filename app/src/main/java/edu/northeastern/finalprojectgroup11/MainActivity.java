@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private ValueEventListener player2Join;
 
     private AlertDialog roomDialog;
+    private boolean areButtonsVisible = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
 
         Button btnTest = findViewById(R.id.test_btn);
         btnTest.setOnClickListener(new View.OnClickListener() {
@@ -101,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         Button btnCreateRoom = findViewById(R.id.createRoom_btn);
+        btnCreateRoom.setVisibility(View.GONE);
         btnCreateRoom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -109,10 +113,29 @@ public class MainActivity extends AppCompatActivity {
         });
 
         Button btnJoinRoom = findViewById(R.id.joinRoom_btn);
+        btnJoinRoom.setVisibility(View.GONE);
         btnJoinRoom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showJoinRoomDialog();
+            }
+        });
+
+        Button btnPlay = findViewById(R.id.play_btn);
+        btnPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (areButtonsVisible) {
+                    // Hide Create Room and Join Room buttons
+                    btnCreateRoom.setVisibility(View.GONE);
+                    btnJoinRoom.setVisibility(View.GONE);
+                    areButtonsVisible = false;
+                } else {
+                    // Show Create Room and Join Room buttons
+                    btnCreateRoom.setVisibility(View.VISIBLE);
+                    btnJoinRoom.setVisibility(View.VISIBLE);
+                    areButtonsVisible = true;
+                }
             }
         });
     }
