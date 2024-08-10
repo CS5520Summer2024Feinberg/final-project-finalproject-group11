@@ -21,8 +21,9 @@ exports.helloWorld = onRequest((request, response) => {
   response.send("Hello from Firebase!");
 });
 
-exports.deleteEmptyRoom =
-    functions.database.ref("/rooms/{roomId}/players/{playerId}/playerState")
+exports.deleteEmptyPublicRoom =
+    functions.database
+        .ref("/PublicRooms/{roomId}/players/{playerId}/playerState")
         .onUpdate(async (change, context) => {
           const roomId = context.params.roomId;
           const playerState = change.after.val();
@@ -31,7 +32,7 @@ exports.deleteEmptyRoom =
             try {
               // Get all players in the room
               const roomSnapshot =
-                    await admin.database().ref(`/rooms/${roomId}/players`)
+                    await admin.database().ref(`/PublicRooms/${roomId}/players`)
                         .once("value");
               const players = roomSnapshot.val();
 
@@ -43,7 +44,7 @@ exports.deleteEmptyRoom =
 
               if (allSurrendered) {
                 // Delete the room if all players have surrendered
-                await admin.database().ref(`/rooms/${roomId}`).remove();
+                await admin.database().ref(`/PublicRooms/${roomId}`).remove();
                 console.log(`Room ${roomId} deleted because all players quit.`);
               } else {
                 console.log(`Room ${roomId} not deleted. Not all player quit.`);
@@ -56,3 +57,39 @@ exports.deleteEmptyRoom =
           return null;
         });
 
+exports.deleteEmptyPrivateRoom =
+    functions.database
+        .ref("/PrivateRooms/{roomId}/players/{playerId}/playerState")
+        .onUpdate(async (change, context) => {
+          const roomId = context.params.roomId;
+          const playerState = change.after.val();
+
+          if (playerState === "quit") {
+            try {
+              // Get all players in the room
+              const roomSnapshot =
+                    await admin.database().
+                        ref(`/PrivateRooms/${roomId}/players`)
+                        .once("value");
+              const players = roomSnapshot.val();
+
+              // Check if all players have surrendered
+              const allSurrendered =
+                  Object.values(players).
+                      every((player) => player.playerState === "quit");
+
+
+              if (allSurrendered) {
+                // Delete the room if all players have surrendered
+                await admin.database().ref(`/PrivateRooms/${roomId}`).remove();
+                console.log(`Room ${roomId} deleted because all players quit.`);
+              } else {
+                console.log(`Room ${roomId} not deleted. Not all player quit.`);
+              }
+            } catch (error) {
+              console.error(`Failed to check or delete room ${roomId}:`, error);
+            }
+          }
+
+          return null;
+        });

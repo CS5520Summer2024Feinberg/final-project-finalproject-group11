@@ -4,10 +4,10 @@ public class GameBoard {
     private int rows;
     private int cols;
     private int mineToPlace = 10;
-    private int mineLeftCount = 10;
     private boolean [][] mineLeft;
     private boolean [][] isClicked;
     private boolean [][] mineTotal; // mine in here don't get remove
+    private int mineLeftCount = 10;
 
     public GameBoard(int rows, int cols) {
         this.rows = rows;
@@ -50,6 +50,7 @@ public class GameBoard {
             return 0;
         } else {
             this.mineLeft[row][col] = false;
+            this.mineTotal[row][col] = false;
             mineToPlace++;
             return 1;
         }
@@ -60,12 +61,13 @@ public class GameBoard {
     }
 
     public int removeMine(int row, int col) {
-        if (row >= this.rows || col >= this.cols || row < 0 || col < 0) {
+        if (row >= this.rows || col >= this.cols || row < 0 || col < 0 && mineLeftCount > 0) {
             return -1;
         } else if (!this.mineLeft[row][col]) {
             return 0;
         } else {
             this.mineLeft[row][col] = false;
+            mineLeftCount--;
             return 1;
         }
     }
@@ -129,6 +131,25 @@ public class GameBoard {
         } else {
             return this.mineTotal[row][col];
         }
+    }
+
+    // Clear all the mine on the board
+    public void clearMines() {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (hasMine(i, j)) {
+                    removeMineDeploy(i, j);
+                }
+            }
+        }
+    }
+
+    public int getMineLeftCount() {
+        return mineLeftCount;
+    }
+
+    public boolean isAllFound() {
+        return mineLeftCount == 0;
     }
 
 

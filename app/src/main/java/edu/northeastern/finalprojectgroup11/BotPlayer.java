@@ -33,8 +33,8 @@ public class BotPlayer {
     }
 
     private void placeMines() {
-        // Randomly place mines on the bot's board, for example:
-        int minesToPlace = 10; // Example: Place 10 mines
+        // Randomly place mines on the bot's board
+        int minesToPlace = 10;
         while (minesToPlace > 0) {
             int row = random.nextInt(boardRows);
             int col = random.nextInt(boardCols);

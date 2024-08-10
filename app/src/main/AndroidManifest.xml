@@ -23,9 +23,6 @@
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".dragDropDemo"
-            android:exported="false" />
-        <activity
             android:name=".DeployActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
