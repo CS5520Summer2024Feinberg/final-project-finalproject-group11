@@ -40,6 +40,7 @@ public class BattleActivity extends AppCompatActivity {
     private String UID;
     private String opponentUID;
     private String roomCode;
+    private String roomType;
     private int boat1row;
     private int boat1col;
     private int playerPosition;
@@ -75,6 +76,30 @@ public class BattleActivity extends AppCompatActivity {
             }
         }, 5000); // 1000 milliseconds delay
     }
+
+//    @Override
+//    protected void onStop() {
+//        super.onStop();
+//
+//        // Remove listeners
+//        if (turnListener != null) {
+//            roomRef.child("turn").removeEventListener(turnListener);
+//        }
+//        if (opponentStateListener != null) {
+//            roomRef.child("players").child(opponentUID).child("playerState").removeEventListener(opponentStateListener);
+//        }
+//
+//        // Delay the execution of the code by 1 second (1000 milliseconds)
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (roomRef != null && UID != null) {
+//                    roomRef.child("players").child(UID).child("playerState").setValue("quit");
+//                }
+//            }
+//        }, 5000); // 1000 milliseconds delay
+//    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,7 +119,8 @@ public class BattleActivity extends AppCompatActivity {
         firebaseDatabase = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         UID = mAuth.getCurrentUser().getUid();
-        roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+        roomType = intent.getStringExtra("roomType");
+        roomRef = firebaseDatabase.getReference(roomType).child(roomCode);
         Log.d(TAG, "Current UID: " + UID);
         Log.d(TAG, "Room code: " + roomCode);
 

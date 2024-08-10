@@ -40,6 +40,7 @@ public class DeployActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
 
     private String roomCode;
+    private String roomType;
     private String UID;
     private String opponentUID;
     private DatabaseReference roomRef;
@@ -115,7 +116,8 @@ public class DeployActivity extends AppCompatActivity {
         firebaseDatabase = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         UID = mAuth.getCurrentUser().getUid();
-        roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+        roomType = intent.getStringExtra("roomType");
+        roomRef = firebaseDatabase.getReference(roomType).child(roomCode);
 
         // show room code
         TextView roomCodeTextView = findViewById(R.id.textViewRoom);
@@ -238,6 +240,7 @@ public class DeployActivity extends AppCompatActivity {
                     Toast.makeText(DeployActivity.this, "game should start.", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(DeployActivity.this, BattleActivity.class);
                     intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
+                    intent.putExtra("roomType", roomType); // Pass the room type (public/private) into new activity
                     startActivity(intent);
                     finish();
 
@@ -371,6 +374,7 @@ public class DeployActivity extends AppCompatActivity {
     }
     private void navigateToMain() {
         Intent intent = new Intent(DeployActivity.this, MainActivity.class);
+        intent.putExtra("roomType", roomType); // Pass the room type (public/private) into new activity
         startActivity(intent);
         finish();
     }
