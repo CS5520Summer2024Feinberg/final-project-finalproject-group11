@@ -1,5 +1,8 @@
 package edu.northeastern.finalprojectgroup11;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GameBoard {
     private int rows;
     private int cols;
@@ -151,6 +154,16 @@ public class GameBoard {
     public boolean isAllFound() {
         return mineLeftCount == 0;
     }
-
+    public List<String> getAllMineLocations() {
+        List<String> mines = new ArrayList<>();
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (mineTotal[row][col]) {
+                    mines.add(row + "," + col);
+                }
+            }
+        }
+        return mines;
+    }
 
 }
