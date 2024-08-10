@@ -48,8 +48,6 @@ public class MainActivity extends AppCompatActivity {
     private ValueEventListener player2Join;
 
     private AlertDialog roomDialog;
-    private boolean areButtonsVisible = false;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,6 +147,46 @@ public class MainActivity extends AppCompatActivity {
                 dialog.show();
             }
         });
+
+        Button btnPlayOnline = findViewById(R.id.play_online_btn);
+        btnPlayOnline.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DatabaseReference roomsRef = firebaseDatabase.getReference("rooms");
+
+                // Search for a room with only one player (where the game state is "waiting")
+                roomsRef.orderByChild("gameState").equalTo("waiting").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        boolean roomFound = false;
+
+                        for (DataSnapshot roomSnapshot : dataSnapshot.getChildren()) {
+                            String roomKey = roomSnapshot.getKey();
+                            String player2 = roomSnapshot.child("player2").getValue(String.class);
+
+                            // Check if player2 is null, indicating that the room is joinable
+                            if (player2 == null) {
+                                joinRoom(roomKey);
+                                roomFound = true;
+                                break;
+                            }
+                        }
+
+                        // If no joinable room was found, create a new room
+                        if (!roomFound) {
+                            createRoomOnline();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        // Handle possible errors
+                        Log.e("Firebase", "Error while searching for a room: " + databaseError.getMessage());
+                    }
+                });
+            }
+        });
+
     }
 
     private void signInAnonymously() {
@@ -464,7 +502,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     //create room stuff
-    //
     private void createRoom() {
         String roomCode = generateRoomCode();  // Method to generate a random room code
 
@@ -523,9 +560,66 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
 
+    private void createRoomOnline() {
+        String roomCode = generateRoomCode();  // Method to generate a random room code
 
+        // check if the newly created room code exist;
+        firebaseDatabase.getReference("rooms").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // If the server is full
+                if (snapshot.getChildrenCount() == maxRoomCount) {
+                    Toast.makeText(getApplicationContext(), "Game server is full, try later", Toast.LENGTH_LONG).show();
+                }
 
+                // if the room code is unique
+                if (!snapshot.hasChild(roomCode)) {
+                    // do the create room and show dialog stuff
+                    roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+                    roomRef.child("player1").setValue(currentUID);  // Save the current user's UID as player1
+                    roomRef.child("gameState").setValue("waiting"); // Set room state as waiting
+
+                    // If no empty room then user auto-creates a room
+                    showRoomOnline();
+
+                    // listener to detect player 2 join
+                    player2Join = new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                // Check if player2 has joined
+                                String player2UID = snapshot.child("player2").getValue(String.class);
+                                if (player2UID != null && !player2UID.isEmpty()) {
+                                    Toast.makeText(getApplicationContext(), "Player 2 joined, game should start", Toast.LENGTH_SHORT).show();
+                                    if (roomDialog.isShowing() || roomDialog != null) {
+                                        roomDialog.dismiss();
+                                        roomDialog = null;
+                                    }
+                                    startGame(roomCode);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.w(TAG, "listenForPlayer2Join:onCancelled", error.toException());
+                        }
+                    };
+                    roomRef.addValueEventListener(player2Join);
+                } else {
+                    // else keep create other number
+                    Toast.makeText(getApplicationContext(), "Please try again.", Toast.LENGTH_SHORT).show();
+                    //createRoom();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private String generateRoomCode() {
@@ -554,7 +648,25 @@ public class MainActivity extends AppCompatActivity {
         roomDialog = builder.create();
 
         roomDialog.show();
+    }
 
+    private void showRoomOnline(){
+        // Display room code in a dialog or on the screen
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Room Created")
+                .setMessage("No empty room now, please wait for other players to join online.")
+                .setPositiveButton("Quit", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        destroyRoom();
+                        dialog.cancel();
+                    }
+                })
+                .setCancelable(false);
+
+        roomDialog = builder.create();
+
+        roomDialog.show();
     }
 
     // Destroy room when player1 quit from create room
