@@ -14,12 +14,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -48,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference userStatusRef;
-    private Button btnLogin;
+    private CardView btnLogin;
     private String currentUID;
     private DatabaseReference roomRef;
     private final int maxRoomCount = 2;
@@ -93,25 +95,24 @@ public class MainActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         firebaseDatabase = FirebaseDatabase.getInstance();
 
-        // Check if user is logged in and update UI accordingly
+        // Check if user is logged in
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
             signInAnonymously();
         } else {
             currentUID = currentUser.getUid();
+            System.out.println("104test");
             setUserOnlineStatus(currentUID, true);
-            updateUsernameUI();
         }
-
+        if (currentUID == null) {
+            showNetworkErrorDialog();
+        }
         btnLogin = findViewById(R.id.login_btn);
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (currentUID != null) {
-                    checkIfGuestAndShowLoginDialog();
-                } else {
-                    showLoginDialog();
-                }
+                System.out.println("test1");
+                checkIfGuestAndShowDialog();
             }
         });
 
@@ -205,6 +206,22 @@ public class MainActivity extends AppCompatActivity {
         btnSettings.setOnClickListener(v -> showSettingsDialog());
     }
 
+    private void showNetworkErrorDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Network Error")
+                .setMessage("You do not have access to the network. Please close the app and reopen it.")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setCancelable(false);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
     private void showSettingsDialog() {
         Dialog settingsDialog = new Dialog(this);
         settingsDialog.setContentView(R.layout.dialog_settings);
@@ -247,7 +264,6 @@ public class MainActivity extends AppCompatActivity {
                             setUserOnlineStatus(user.getUid(), true);
                             storeUserData(user.getUid(), guestUsername, true);  // Store user data with isGuest as true
                             sharedPreferences.edit().putString("UID", currentUID).apply();
-                            updateUsernameUI();  // Update the UI with the username
                         }
                     } else {
                         Log.w(TAG, "signInAnonymously:failure", task.getException());
@@ -256,48 +272,35 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void updateUsernameUI() {
-        DatabaseReference usernameRef = firebaseDatabase.getReference("users")
-                .child(currentUID)
-                .child("username");
-        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Get the username as a String
-                String username = dataSnapshot.getValue(String.class);
-                if (username != null) {
-                    // Set the button text to the username
-                    btnLogin.setText(username);
-                } else {
-                    // Handle the case where username is not available
-                    btnLogin.setText("User");
-                }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                // Handle potential errors here
-                Log.w("TAG", "Failed to read username.");
-            }
-        });
-    }
+    private void checkIfGuestAndShowDialog() {
+        System.out.println(currentUID);
 
-    private void checkIfGuestAndShowLoginDialog() {
         DatabaseReference userRef = firebaseDatabase.getReference("users").child(currentUID);
-        userRef.child("isGuest").addListenerForSingleValueEvent(new ValueEventListener() {
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Boolean isGuest = snapshot.getValue(Boolean.class);
-                if (isGuest != null && isGuest) {
-                    showGuestLoginDialog();
-                } else {
-                    showUserOptionsDialog();
+                String username = snapshot.child("username").getValue(String.class);
+                System.out.println("user:" + username);
+
+                Boolean isGuest = snapshot.child("isGuest").getValue(Boolean.class);
+                System.out.println("guest" + isGuest);
+
+                if (username != null) {
+                    if (isGuest != null && isGuest) {
+                        System.out.println("guest1");
+                        showGuestDialog(username);
+                    } else {
+                        System.out.println("user1");
+
+                        showUserOptionsDialog();
+                    }
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Failed to check if user is guest: " + error.getMessage());
+                Log.e(TAG, "Failed to check user status: " + error.getMessage());
             }
         });
     }
@@ -308,26 +311,31 @@ public class MainActivity extends AppCompatActivity {
         View optionsView = inflater.inflate(R.layout.dialog_user_options, null);
         builder.setView(optionsView);
 
+        TextView title = optionsView.findViewById(R.id.title);
         EditText usernameEditText = optionsView.findViewById(R.id.username);
         Button btnSaveUsername = optionsView.findViewById(R.id.btnSaveUsername);
         Button btnSignOut = optionsView.findViewById(R.id.btnSignOut);
+        TextView statsTextView = optionsView.findViewById(R.id.stats);
 
-        // Pre-fill the EditText with the current username
+        // Fetch the current username and statistics
         DatabaseReference usernameRef = firebaseDatabase.getReference("users")
-                .child(currentUID)
-                .child("username");
+                .child(currentUID);
+
         usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String currentUsername = snapshot.getValue(String.class);
-                if (currentUsername != null) {
-                    usernameEditText.setText(currentUsername);
-                }
+                String currentUsername = snapshot.child("username").getValue(String.class);
+                Integer wins = snapshot.child("win").getValue(Integer.class);
+                Integer losses = snapshot.child("loss").getValue(Integer.class);
+                double winRate = wins + losses > 0 ? (double) wins / (wins + losses) * 100 : 0;
+                title.setText("User: " + currentUsername);
+                usernameEditText.setHint(currentUsername); // Sets the current username as hint
+                statsTextView.setText("Wins: " + wins + " | Losses: " + losses + " | Win Rate: " + String.format("%.2f%%", winRate));
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.w(TAG, "Failed to read current username.", error.toException());
+                Log.w(TAG, "Failed to read user information.", error.toException());
             }
         });
 
@@ -359,18 +367,17 @@ public class MainActivity extends AppCompatActivity {
         usernameRef.setValue(newUsername).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Toast.makeText(MainActivity.this, "Username updated successfully", Toast.LENGTH_SHORT).show();
-                updateUsernameUI();  // Update the UI with the new username
             } else {
                 Toast.makeText(MainActivity.this, "Failed to update username", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void showGuestLoginDialog() {
+    private void showGuestDialog(String username) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Guest Account")
-                .setMessage("You are currently using a guest account. Do you want to log in?")
-                .setPositiveButton("Log in", new DialogInterface.OnClickListener() {
+        builder.setTitle("Guest Account: " + username)
+                .setMessage("You are currently a guest and your game data will not be stored.")
+                .setPositiveButton("Login/Register", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         showLoginDialog();
@@ -439,7 +446,6 @@ public class MainActivity extends AppCompatActivity {
                         if (user != null) {
                             currentUID = user.getUid();
                             setUserOnlineStatus(user.getUid(), true);
-                            updateUsernameUI();
                             sharedPreferences.edit().putString("UID", currentUID).apply();
                             Toast.makeText(MainActivity.this, "Successful login", Toast.LENGTH_SHORT).show();
                         }
@@ -466,7 +472,6 @@ public class MainActivity extends AppCompatActivity {
                             setUserOnlineStatus(user.getUid(), true);
                             storeUserData(user.getUid(), defaultUsername, false); // Store the user data with isGuest as false
                             sharedPreferences.edit().putString("UID", currentUID).apply();
-                            updateUsernameUI(); // Update the UI with the username
                             Toast.makeText(MainActivity.this, "Successful registration", Toast.LENGTH_SHORT).show();
                         }
                     } else {
@@ -486,6 +491,10 @@ public class MainActivity extends AppCompatActivity {
         userRef.child("username").setValue(username);
         userRef.child("isGuest").setValue(isGuest);
         userRef.child("status").setValue("online");
+        if (!isGuest) {
+            userRef.child("win").setValue(0);
+            userRef.child("loss").setValue(0);
+        }
     }
 
     private void setUserOnlineStatus(String userId, boolean isOnline) {
