@@ -101,7 +101,6 @@ public class MainActivity extends AppCompatActivity {
             signInAnonymously();
         } else {
             currentUID = currentUser.getUid();
-            System.out.println("104test");
             setUserOnlineStatus(currentUID, true);
         }
         if (currentUID == null) {
@@ -111,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                System.out.println("test1");
                 checkIfGuestAndShowDialog();
             }
         });
@@ -274,25 +272,16 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void checkIfGuestAndShowDialog() {
-        System.out.println(currentUID);
-
         DatabaseReference userRef = firebaseDatabase.getReference("users").child(currentUID);
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String username = snapshot.child("username").getValue(String.class);
-                System.out.println("user:" + username);
-
                 Boolean isGuest = snapshot.child("isGuest").getValue(Boolean.class);
-                System.out.println("guest" + isGuest);
-
                 if (username != null) {
                     if (isGuest != null && isGuest) {
-                        System.out.println("guest1");
                         showGuestDialog(username);
                     } else {
-                        System.out.println("user1");
-
                         showUserOptionsDialog();
                     }
                 }
