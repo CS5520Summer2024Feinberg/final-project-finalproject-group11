@@ -22,9 +22,6 @@
             android:name=".BattleActivity"
             android:exported="false" />
         <activity
-            android:name=".dragDropDemo"
-            android:exported="false" />
-        <activity
             android:name=".DeployActivity"
             android:exported="false" />
         <activity
