@@ -652,9 +652,29 @@ public class MainActivity extends AppCompatActivity {
 
     private void showRoomOnline(){
         // Display room code in a dialog or on the screen
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setTitle("Searching")
+//                .setMessage("No empty room now, please wait for other players to join online.")
+//                .setPositiveButton("Quit", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        destroyRoom();
+//                        dialog.cancel();
+//                    }
+//                })
+//                .setCancelable(false);
+//
+//        roomDialog = builder.create();
+//
+//        roomDialog.show();
+
+        // Inflate the custom layout for the dialog
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_searching, null);
+
+        // Build the dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Searching")
-                .setMessage("No empty room now, please wait for other players to join online.")
+        builder.setView(dialogView)  // Set the custom layout as the dialog view
                 .setPositiveButton("Quit", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
