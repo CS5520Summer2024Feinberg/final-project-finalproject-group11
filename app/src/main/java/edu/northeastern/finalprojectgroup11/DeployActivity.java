@@ -3,13 +3,16 @@ package edu.northeastern.finalprojectgroup11;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.DragEvent;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,6 +25,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.gridlayout.widget.GridLayout;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -33,6 +37,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 public class DeployActivity extends AppCompatActivity {
     private String TAG = "DeployActivity";
@@ -44,7 +49,6 @@ public class DeployActivity extends AppCompatActivity {
     private String UID;
     private String opponentUID;
     private DatabaseReference roomRef;
-    private TextView dragTextView;
     Button btnReady;
 
     private ValueEventListener bothReady;
@@ -52,6 +56,18 @@ public class DeployActivity extends AppCompatActivity {
 
     private boolean isBoatPlaced = false;
 
+    private GameBoard board;
+    private androidx.gridlayout.widget.GridLayout gridLayout;
+    private int rows = 10;
+    private int cols = 10;
+    private Random random = new Random();
+    private Handler handler; // used for delay
+
+    private CountDownTimer countDownTimer;
+    private TextView countdownTextView; // TextView to show the countdown
+
+
+    private TextView mineLeftextView;
 
     @Override
     protected void onDestroy() {
@@ -64,7 +80,9 @@ public class DeployActivity extends AppCompatActivity {
         if (opponentStateListener != null) {
             roomRef.child("players").child(opponentUID).child("playerState").removeEventListener(opponentStateListener);
         }
-
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
         // Delay the execution of the code by 5 second
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -94,14 +112,18 @@ public class DeployActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_deploy);
+        setContentView(R.layout.activity_bot_deploy);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        handler = new Handler(Looper.getMainLooper()); // for delay
+
+        mineLeftextView = findViewById(R.id.mineLeftTextView);
+        countdownTextView = findViewById(R.id.countdownTextView);
+        btnReady = findViewById(R.id.buttonReady);
+        Button btnRandom = findViewById(R.id.buttonRandom);
+        Button btnReset = findViewById(R.id.buttonReset);
+        Button btnQuit = findViewById(R.id.buttonQuit);
+
+
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -120,25 +142,43 @@ public class DeployActivity extends AppCompatActivity {
         roomType = intent.getStringExtra("roomType");
         roomRef = firebaseDatabase.getReference(roomType).child(roomCode);
 
-        // show room code
-        TextView roomCodeTextView = findViewById(R.id.textViewRoom);
-        roomCodeTextView.setText(roomCode);
+        // Initialize the countdown timer for 10 seconds
+        countDownTimer = new CountDownTimer(20000, 1000) {
+            public void onTick(long millisUntilFinished) {
+                // Update the countdown text each second
+                countdownTextView.setText("" + millisUntilFinished / 1000);
+            }
 
-        // Set current player as not ready as default
-        roomRef.child("players").child(UID).child("playerState").setValue("deploying");
+            public void onFinish() {
+                placeRandom();
+                Toast.makeText(DeployActivity.this, "Time's up! Random move selected.", Toast.LENGTH_SHORT).show();
+                // Prevent user click after random select
+                setGridLayoutEnabled(false);
 
-        // Button to set ready
-        btnReady = findViewById(R.id.buttonReady);
-        btnReady.setEnabled(false);
+                // Add delay
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        setGridLayoutEnabled(true); // reset to true
+                        onReadyClick();
+                    }
+                }, 1500);
+
+            }
+        };
+        // Start the countdown when the activity is created
+        countDownTimer.start();
+
+        // Ready button to start game
         btnReady.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isBoatPlaced) {
-                    roomRef.child("players").child(UID).child("playerState").setValue("ready");
-                } else {
-                    Toast.makeText(DeployActivity.this, "Please place the boat on the grid before readying up.", Toast.LENGTH_SHORT).show();
-                }            }
+                onReadyClick();
+            }
         });
+
+        // Set current player as not ready as default
+        roomRef.child("players").child(UID).child("playerState").setValue("deploying");
 
         // Listener to check if both ready and enter battle
         bothReady = new ValueEventListener() {
@@ -154,8 +194,24 @@ public class DeployActivity extends AppCompatActivity {
         };
         roomRef.child("players").addValueEventListener(bothReady);
 
+        // Random button to random place mine
+        btnRandom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onResetClick();
+                placeRandom();
+            }
+        });
+
+        // Reset button to clear the mine on the board
+        btnReset.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onResetClick();
+            }
+        });
+
         // Button to quit game
-        Button btnQuit = findViewById(R.id.buttonQuit);
         btnQuit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -163,25 +219,45 @@ public class DeployActivity extends AppCompatActivity {
             }
         });
 
-        // Drag stuff
-        // Set up the drag listener for the TextView
-        dragTextView = findViewById(R.id.dragTextView);
+        // Board stuff
+        this.board = new GameBoard(rows, cols);
+        gridLayout = findViewById(R.id.gridLayoutMinePlacement);
+        int totalWidth = gridLayout.getWidth();
+        int buttonSize = totalWidth / cols;
+        int remainder = totalWidth % cols; // Calculate any remainder pixels
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                Button button = new Button(this);
 
-        dragTextView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                ClipData data = ClipData.newPlainText("", "");
-                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(v);
-                v.startDragAndDrop(data, shadowBuilder, v, 0);
-                return true;
+                button.setBackgroundResource(R.drawable.button_border);
+
+                androidx.gridlayout.widget.GridLayout.LayoutParams params = new androidx.gridlayout.widget.GridLayout.LayoutParams(
+                        androidx.gridlayout.widget.GridLayout.spec(i, 1f), GridLayout.spec(j, 1f));
+                params.width = buttonSize + (j < remainder ? 1 : 0); // Distribute the remainder pixels
+                params.height = params.width;
+                button.setLayoutParams(params);
+
+                // Set color based on checkerboard pattern
+                if ((i + j) % 2 == 0) {
+                    button.setBackgroundColor(Color.parseColor("#2980fb"));
+                    button.setTextColor(Color.WHITE); // Set text color for visibility
+                } else {
+                    button.setBackgroundColor(Color.parseColor("#97C0FB"));
+                    button.setTextColor(Color.BLACK); // Set text color for visibility
+                }
+
+                gridLayout.addView(button);
+
+                // Set click action here
+                final int row = i;
+                final int col = j;
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        onCellClick(row, col);
+                    }
+                });
             }
-        });
-
-        // Set up the drag listener for the GridLayout
-        GridLayout gridLayout = findViewById(R.id.gridLayout);
-        for (int i = 0; i < gridLayout.getChildCount(); i++) {
-            View block = gridLayout.getChildAt(i);
-            block.setOnDragListener(new DeployActivity.MyDragListener());
         }
 
         // Get information of the opponent
@@ -221,6 +297,42 @@ public class DeployActivity extends AppCompatActivity {
         });
 
     }
+    // Action when the ready button is clicked
+    public void onReadyClick() {
+        if (board.isDeployReady()) {
+            // Cancel the timer
+            if (countDownTimer != null) {
+                countDownTimer.cancel();
+            }
+            roomRef.child("players").child(UID).child("playerState").setValue("ready");
+        } else {
+            Toast.makeText(DeployActivity.this, "Deploy all the mines before start.", Toast.LENGTH_SHORT).show();
+        }
+    }
+    // 1 mine is placed, -1 mine is removed
+    public int onCellClick(int row, int col) {
+        Button button = (Button) gridLayout.getChildAt(row * board.getCols() + col);
+
+        if (!board.hasMine(row, col) && board.getMineToPlace() > 0) {
+            board.placeMine(row, col);
+
+            // Update the view to show the mine placement
+            button.setText("\u26AB");
+            button.setGravity(Gravity.CENTER);
+            button.setTextSize(20);
+            button.setPadding(5, 5, 5, 5);
+            mineLeftextView.setText(String.valueOf(board.getMineToPlace()));
+
+            return 1;
+
+        } else {
+            board.removeMineDeploy(row,col);
+            board.removeMine(row,col);
+            button.setText(""); // Mark the mine
+            mineLeftextView.setText(String.valueOf(board.getMineToPlace()));
+            return -1;
+        }
+    }
 
     // Check if both players are ready and start game activity if ready
     private void checkReady(DatabaseReference roomRef) {
@@ -236,15 +348,24 @@ public class DeployActivity extends AppCompatActivity {
                         readyCount++;
                     }
                 }
-
                 if (readyCount == 2) {
-                    Toast.makeText(DeployActivity.this, "game should start.", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(DeployActivity.this, BattleActivity.class);
-                    intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
-                    intent.putExtra("roomType", roomType); // Pass the room type (public/private) into new activity
-                    startActivity(intent);
-                    finish();
-
+                    // Retrieve mine locations
+                    List<String> mineLocations = board.getAllMineLocations();
+                    // Store them in Firebase under each player's node
+                    roomRef.child("players").child(UID).child("locations").setValue(mineLocations)
+                            .addOnSuccessListener(aVoid -> {
+                                // Proceed to start the game
+                                Toast.makeText(DeployActivity.this, "game should start.", Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent(DeployActivity.this, BattleActivity.class);
+                                intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
+                                intent.putExtra("roomType", roomType); // Pass the room type (public/private) into new activity
+                                GameBoardManager.setGameBoard(board);
+                                startActivity(intent);
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to store mine locations: " + e.getMessage());
+                            });
                 }
             }
 
@@ -253,6 +374,36 @@ public class DeployActivity extends AppCompatActivity {
                 Toast.makeText(DeployActivity.this, "Failed to update players' status.", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    // Reset the board by click cell with mine
+    public void onResetClick() {
+        for (int i=0; i<rows; i++) {
+            for (int j=0; j<cols; j++) {
+                if (board.hasMine(i,j)) {
+                    onCellClick(i,j);
+                }
+            }
+        }
+    }
+    // Randomly place mines
+    public void placeRandom() {
+        // Randomly place mines on the current board
+        int minesToPlace = board.getMineToPlace();
+        while (minesToPlace > 0) {
+            int row = random.nextInt(rows);
+            int col = random.nextInt(cols);
+            if (onCellClick(row, col) == 1) {
+                minesToPlace--;
+            } else {
+                minesToPlace++;
+            }
+        }
+    }
+    private void setGridLayoutEnabled(boolean enabled) {
+        for (int i = 0; i < gridLayout.getChildCount(); i++) {
+            View child = gridLayout.getChildAt(i);
+            child.setEnabled(enabled);
+        }
     }
 
     private void showQuitConfirmationDialog() {
@@ -293,57 +444,6 @@ public class DeployActivity extends AppCompatActivity {
         }
     }
 
-    private class MyDragListener implements View.OnDragListener {
-
-        @Override
-        public boolean onDrag(View v, DragEvent event) {
-            switch (event.getAction()) {
-                case DragEvent.ACTION_DRAG_STARTED:
-                    return true;
-
-                case DragEvent.ACTION_DRAG_ENTERED:
-                    v.setBackgroundColor(getResources().getColor(android.R.color.holo_orange_light)); // Highlight the target
-                    return true;
-
-                case DragEvent.ACTION_DRAG_EXITED:
-                    v.setBackgroundColor(getResources().getColor(android.R.color.darker_gray)); // Revert the highlight
-                    return true;
-
-                case DragEvent.ACTION_DROP:
-                    View draggedView = (View) event.getLocalState();
-                    // Calculate the center position of the target block
-                    float targetX = v.getX() + (v.getWidth() - draggedView.getWidth()) / 2;
-                    float targetY = v.getY() + (v.getHeight() - draggedView.getHeight()) / 2;
-                    draggedView.setX(targetX);
-                    draggedView.setY(targetY);
-
-                    // Get the location of the block
-                    String location = ((TextView) v).getText().toString();
-                    // Convert location string "[row,col]" to List<Integer>
-                    String[] parts = location.replaceAll("[\\[\\]]", "").split(",");
-                    List<Integer> coordinates = new ArrayList<>();
-                    //coordinates.add(Integer.parseInt(parts[0].trim()));
-                    //coordinates.add(Integer.parseInt(parts[1].trim()));
-                    // Update the boat location in the database
-                    roomRef.child("players").child(UID).child("boat1Location").child("row").setValue(Integer.parseInt(parts[0].trim()));
-                    roomRef.child("players").child(UID).child("boat1Location").child("col").setValue(Integer.parseInt(parts[1].trim()));
-
-                    isBoatPlaced = true;
-                    btnReady.setEnabled(true);
-
-                    return true;
-
-
-                case DragEvent.ACTION_DRAG_ENDED:
-                    v.setBackgroundColor(ContextCompat.getColor(DeployActivity.this, android.R.color.darker_gray)); // Revert the highlight
-                    return true;
-
-                default:
-                    break;
-            }
-            return false;
-        }
-    }
     private void showLoseDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("You Lose")
