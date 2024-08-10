@@ -2,6 +2,7 @@ package edu.northeastern.finalprojectgroup11;
 
 import static android.content.ContentValues.TAG;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,6 +12,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -36,6 +39,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Random;
 
+import android.widget.LinearLayout;
+
+import edu.northeastern.finalprojectgroup11.Music.BGMPlayer;
+
 public class MainActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private FirebaseAuth mAuth;
@@ -52,11 +59,15 @@ public class MainActivity extends AppCompatActivity {
     private static final String PUBLIC_ROOM = "PublicRooms";
     private static final String PRIVATE_ROOM = "PrivateRooms";
 
+    private int bgmVolume = 50; // Default volume (50% of max volume)
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        BGMPlayer.getInstance(this).start();
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -190,6 +201,39 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ImageButton btnSettings = findViewById(R.id.btn_settings);
+        btnSettings.setOnClickListener(v -> showSettingsDialog());
+    }
+
+    private void showSettingsDialog() {
+        Dialog settingsDialog = new Dialog(this);
+        settingsDialog.setContentView(R.layout.dialog_settings);
+        settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_volume);
+        seekBarVolume.setProgress(bgmVolume);
+
+        seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float volume = progress / 100f; // Convert progress to a float between 0.0 and 1.0
+                BGMPlayer.getInstance(MainActivity.this).setVolume(volume);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_how_to_play);
+        btnHowToPlay.setOnClickListener(v -> {
+            // Handle "How to Play" button click here
+//            showHowToPlayDialog();
+        });
+
+        settingsDialog.show();
     }
 
     private void signInAnonymously() {
@@ -211,7 +255,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
-
 
     private void updateUsernameUI() {
         DatabaseReference usernameRef = firebaseDatabase.getReference("users")
@@ -651,28 +694,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showRoomOnline(){
-        // Display room code in a dialog or on the screen
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle("Searching")
-//                .setMessage("No empty room now, please wait for other players to join online.")
-//                .setPositiveButton("Quit", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialog, int which) {
-//                        destroyRoom();
-//                        dialog.cancel();
-//                    }
-//                })
-//                .setCancelable(false);
-//
-//        roomDialog = builder.create();
-//
-//        roomDialog.show();
-
-        // Inflate the custom layout for the dialog
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_searching, null);
 
-        // Build the dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(dialogView)  // Set the custom layout as the dialog view
                 .setPositiveButton("Quit", new DialogInterface.OnClickListener() {
@@ -812,6 +836,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startGame(String roomCode, String roomType) {
+        BGMPlayer.getInstance(this).stop();
         roomRef.child("gameState").setValue("active"); // Set room state as active
 
         // Remove listener for player 2 join
@@ -827,6 +852,26 @@ public class MainActivity extends AppCompatActivity {
     }
     private boolean isValidEmail(String email) {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+    }
+
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        BGMPlayer.getInstance(this).pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        BGMPlayer.getInstance(this).start();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BGMPlayer.getInstance(this).stop();
     }
 
 }
