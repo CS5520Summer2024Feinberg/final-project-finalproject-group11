@@ -10,9 +10,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +28,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
@@ -39,6 +42,8 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import android.widget.LinearLayout;
@@ -245,11 +250,53 @@ public class MainActivity extends AppCompatActivity {
         Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_how_to_play);
         btnHowToPlay.setOnClickListener(v -> {
             // Handle "How to Play" button click here
-//            showHowToPlayDialog();
+            // showHowToPlayDialog();
         });
 
         settingsDialog.show();
     }
+
+//    private void showHowToPlayDialog() {
+//        final Dialog howToPlayDialog = new Dialog(this);
+//        howToPlayDialog.setContentView(R.layout.dialog_how_to_play);
+//        howToPlayDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+//
+//        ImageView tutorialImage = howToPlayDialog.findViewById(R.id.tutorial_image);
+//        Button btnNext = howToPlayDialog.findViewById(R.id.btn_next);
+//        Button btnPrevious = howToPlayDialog.findViewById(R.id.btn_previous);
+//
+//        // List to hold image URLs or paths
+//        List<String> imageUrls = new ArrayList<>();
+//        imageUrls.add("url");
+//
+//
+//        final int[] currentIndex = {0};  // Current image index
+//
+//        // Load the first image
+//        loadImage(tutorialImage, imageUrls.get(0));
+//
+//        btnNext.setOnClickListener(v -> {
+//            if (currentIndex[0] < imageUrls.size() - 1) {
+//                currentIndex[0]++;
+//                loadImage(tutorialImage, imageUrls.get(currentIndex[0]));
+//            }
+//        });
+//
+//        btnPrevious.setOnClickListener(v -> {
+//            if (currentIndex[0] > 0) {
+//                currentIndex[0]--;
+//                loadImage(tutorialImage, imageUrls.get(currentIndex[0]));
+//            }
+//        });
+//
+//        howToPlayDialog.show();
+//    }
+//
+//    private void loadImage(ImageView imageView, String url) {
+//        Glide.with(this)
+//                .load(url)
+//                .into(imageView);
+//    }
 
     private void signInAnonymously() {
         mAuth.signInAnonymously()
