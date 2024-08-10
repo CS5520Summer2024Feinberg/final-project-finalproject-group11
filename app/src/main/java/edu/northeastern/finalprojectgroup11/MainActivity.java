@@ -491,10 +491,8 @@ public class MainActivity extends AppCompatActivity {
         userRef.child("username").setValue(username);
         userRef.child("isGuest").setValue(isGuest);
         userRef.child("status").setValue("online");
-        if (!isGuest) {
-            userRef.child("win").setValue(0);
-            userRef.child("loss").setValue(0);
-        }
+        userRef.child("win").setValue(0);
+        userRef.child("loss").setValue(0);
     }
 
     private void setUserOnlineStatus(String userId, boolean isOnline) {
