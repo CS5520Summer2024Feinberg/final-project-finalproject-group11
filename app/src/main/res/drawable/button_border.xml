@@ -1,0 +1,16 @@
+<!-- res/drawable/button_border.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <!-- Background color of the button -->
+            <solid android:color="#F0FFFF" />
+
+
+            <!-- Border definition -->
+            <stroke
+                android:width="0dp">
+            </stroke>  <!-- Border thickness -->
+            android:color="#000000" /> <!-- Border color -->
+        </shape>
+    </item>
+</layer-list>

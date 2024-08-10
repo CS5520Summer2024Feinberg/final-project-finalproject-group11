@@ -63,12 +63,12 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        Button btnBot = findViewById(R.id.test_btn);
+        btnBot.setOnClickListener(new View.OnClickListener() {
 
-        Button btnTest = findViewById(R.id.test_btn);
-        btnTest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, dragDropDemo.class);
+                Intent intent = new Intent(MainActivity.this, BotDeployActivity.class);
                 startActivity(intent);
             }
         });
