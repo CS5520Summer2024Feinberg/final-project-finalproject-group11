@@ -49,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
 
     private AlertDialog roomDialog;
 
+    private static final String PUBLIC_ROOM = "PublicRooms";
+    private static final String PRIVATE_ROOM = "PrivateRooms";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -152,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
         btnPlayOnline.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DatabaseReference roomsRef = firebaseDatabase.getReference("rooms");
+                DatabaseReference roomsRef = firebaseDatabase.getReference(PUBLIC_ROOM);
 
                 // Search for a room with only one player (where the game state is "waiting")
                 roomsRef.orderByChild("gameState").equalTo("waiting").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -166,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
 
                             // Check if player2 is null, indicating that the room is joinable
                             if (player2 == null) {
-                                joinRoom(roomKey);
+                                joinRoomOnline(roomKey);
                                 roomFound = true;
                                 break;
                             }
@@ -255,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     private void showUserOptionsDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
@@ -303,6 +307,7 @@ public class MainActivity extends AppCompatActivity {
 
         dialog.show();
     }
+
     private void updateUsername(String newUsername) {
         DatabaseReference usernameRef = firebaseDatabase.getReference("users")
                 .child(currentUID)
@@ -317,6 +322,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     private void showGuestLoginDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Guest Account")
@@ -338,7 +344,6 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog dialog = builder.create();
         dialog.show();
     }
-
 
     private void showLoginDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -433,8 +438,6 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-
-
     private void storeUserData(String uid, String username, boolean isGuest) {
         DatabaseReference userRef = firebaseDatabase.getReference("users").child(uid);
         userRef.child("username").setValue(username);
@@ -452,9 +455,6 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "User status set to offline for UID: " + userId);
         }
     }
-
-
-
 
     private void showSignOutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -506,7 +506,7 @@ public class MainActivity extends AppCompatActivity {
         String roomCode = generateRoomCode();  // Method to generate a random room code
 
         // check if the newly created room code exist;
-        firebaseDatabase.getReference("rooms").addListenerForSingleValueEvent(new ValueEventListener() {
+        firebaseDatabase.getReference(PRIVATE_ROOM).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // If the server is full
@@ -517,7 +517,7 @@ public class MainActivity extends AppCompatActivity {
                 // if the room code is unique
                 if (!snapshot.hasChild(roomCode)) {
                     // do the create room and show dialog stuff
-                    roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+                    roomRef = firebaseDatabase.getReference(PRIVATE_ROOM).child(roomCode);
                     roomRef.child("player1").setValue(currentUID);  // Save the current user's UID as player1
                     roomRef.child("gameState").setValue("waiting"); // Set room state as waiting
 
@@ -537,7 +537,7 @@ public class MainActivity extends AppCompatActivity {
                                         roomDialog.dismiss();
                                         roomDialog = null;
                                     }
-                                    startGame(roomCode);
+                                    startGame(roomCode, PRIVATE_ROOM);
                                 }
                             }
                         }
@@ -550,7 +550,7 @@ public class MainActivity extends AppCompatActivity {
                     roomRef.addValueEventListener(player2Join);
                 } else {
                     // else keep create other number
-                    Toast.makeText(getApplicationContext(), "repeat number", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Please try again.", Toast.LENGTH_SHORT).show();
                     //createRoom();
                 }
             }
@@ -566,7 +566,7 @@ public class MainActivity extends AppCompatActivity {
         String roomCode = generateRoomCode();  // Method to generate a random room code
 
         // check if the newly created room code exist;
-        firebaseDatabase.getReference("rooms").addListenerForSingleValueEvent(new ValueEventListener() {
+        firebaseDatabase.getReference(PUBLIC_ROOM).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // If the server is full
@@ -577,7 +577,7 @@ public class MainActivity extends AppCompatActivity {
                 // if the room code is unique
                 if (!snapshot.hasChild(roomCode)) {
                     // do the create room and show dialog stuff
-                    roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+                    roomRef = firebaseDatabase.getReference(PUBLIC_ROOM).child(roomCode);
                     roomRef.child("player1").setValue(currentUID);  // Save the current user's UID as player1
                     roomRef.child("gameState").setValue("waiting"); // Set room state as waiting
 
@@ -597,7 +597,7 @@ public class MainActivity extends AppCompatActivity {
                                         roomDialog.dismiss();
                                         roomDialog = null;
                                     }
-                                    startGame(roomCode);
+                                    startGame(roomCode, PUBLIC_ROOM);
                                 }
                             }
                         }
@@ -653,7 +653,7 @@ public class MainActivity extends AppCompatActivity {
     private void showRoomOnline(){
         // Display room code in a dialog or on the screen
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Room Created")
+        builder.setTitle("Searching")
                 .setMessage("No empty room now, please wait for other players to join online.")
                 .setPositiveButton("Quit", new DialogInterface.OnClickListener() {
                     @Override
@@ -714,12 +714,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void joinRoom(String roomCode) {
         // use a listener to check if roomcode exist or not
-        firebaseDatabase.getReference("rooms").addListenerForSingleValueEvent(new ValueEventListener() {
+        firebaseDatabase.getReference(PRIVATE_ROOM).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // only join room if room exist
                 if (snapshot.hasChild(roomCode)) {
-                    roomRef = firebaseDatabase.getReference("rooms").child(roomCode);
+                    roomRef = firebaseDatabase.getReference(PRIVATE_ROOM).child(roomCode);
 
                     // Check if both players are present to start the game
                     roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -728,7 +728,7 @@ public class MainActivity extends AppCompatActivity {
                             if (dataSnapshot.child("player1").exists() && dataSnapshot.child("gameState").getValue().equals("waiting") ) {
                                 roomRef.child("player2").setValue(currentUID);  // Save the current user's UID as player2
                                 Toast.makeText(getApplicationContext(), "join success, should start game", Toast.LENGTH_SHORT).show();
-                                startGame(roomCode);
+                                startGame(roomCode, PRIVATE_ROOM);
                             } else {
                                 Toast.makeText(getApplicationContext(), "Room is full", Toast.LENGTH_SHORT).show();
                             }
@@ -750,13 +750,48 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-
-
-
     }
 
-    private void startGame(String roomCode) {
+    private void joinRoomOnline(String roomCode){
+        firebaseDatabase.getReference(PUBLIC_ROOM).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // only join room if room exist
+                if (snapshot.hasChild(roomCode)) {
+                    roomRef = firebaseDatabase.getReference(PUBLIC_ROOM).child(roomCode);
+
+                    // Check if both players are present to start the game
+                    roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.child("player1").exists() && dataSnapshot.child("gameState").getValue().equals("waiting") ) {
+                                roomRef.child("player2").setValue(currentUID);  // Save the current user's UID as player2
+                                Toast.makeText(getApplicationContext(), "join success, should start game", Toast.LENGTH_SHORT).show();
+                                startGame(roomCode, PUBLIC_ROOM);
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Room is full", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                            Log.w(TAG, "joinRoom:onCancelled", databaseError.toException());
+                        }
+                    });
+                } else {
+                    //else shoe room not found
+                    Toast.makeText(getApplicationContext(), "Room not found", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void startGame(String roomCode, String roomType) {
         roomRef.child("gameState").setValue("active"); // Set room state as active
 
         // Remove listener for player 2 join
@@ -767,6 +802,7 @@ public class MainActivity extends AppCompatActivity {
         // start deploy activity
         Intent intent = new Intent(MainActivity.this, DeployActivity.class);
         intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
+        intent.putExtra("roomType", roomType); // Pass the room type (public/private) into new activity
         startActivity(intent);
     }
     private boolean isValidEmail(String email) {
