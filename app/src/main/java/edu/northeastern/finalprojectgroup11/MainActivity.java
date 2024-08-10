@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private ValueEventListener player2Join;
 
     private AlertDialog roomDialog;
+    private boolean areButtonsVisible = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnBot = findViewById(R.id.test_btn);
         btnBot.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, BotDeployActivity.class);
@@ -100,19 +103,50 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button btnCreateRoom = findViewById(R.id.createRoom_btn);
-        btnCreateRoom.setOnClickListener(new View.OnClickListener() {
+        // show diaglog to create and join room
+        Button btnPlay = findViewById(R.id.play_friend_btn);
+        btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                createRoom();
-            }
-        });
+            public void onClick(View view) {
+                // Inflate the custom layout
+                LayoutInflater inflater = getLayoutInflater();
+                View dialogView = inflater.inflate(R.layout.dialog_play_friend, null);
 
-        Button btnJoinRoom = findViewById(R.id.joinRoom_btn);
-        btnJoinRoom.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showJoinRoomDialog();
+                // Create the dialog
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setView(dialogView);
+                AlertDialog dialog = builder.create();
+
+                // Set up the buttons
+                Button backButton = dialogView.findViewById(R.id.backButton);
+                Button btnCreateRoom = dialogView.findViewById(R.id.button1);
+                Button btnJoinRoom = dialogView.findViewById(R.id.button2);
+
+                backButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.dismiss(); // Dismiss the dialog
+                    }
+                });
+                // create room
+                btnCreateRoom.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        createRoom();
+                        dialog.dismiss();
+                    }
+                });
+                // join room
+                btnJoinRoom.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        showJoinRoomDialog();
+                        dialog.dismiss();
+                    }
+                });
+
+                // Show the dialog
+                dialog.show();
             }
         });
     }
