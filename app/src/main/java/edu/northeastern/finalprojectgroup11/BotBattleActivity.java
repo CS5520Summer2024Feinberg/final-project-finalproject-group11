@@ -1,5 +1,7 @@
 package edu.northeastern.finalprojectgroup11;
 
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +13,8 @@ import android.widget.TextView;
 import android.os.CountDownTimer;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AlertDialog;
 import androidx.gridlayout.widget.GridLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,9 +22,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.Random;
 
 
-// TODO: quit button, timer also count for bot, finsih acticity from deploy, step left, winner checking
+// TODO:  step left, winner checking
 // icon for mine, misses(step left) on both side, timer, dialog pop up, link quit with back
 public class BotBattleActivity extends AppCompatActivity {
+    private final int botDelay = 0;
     private final int boardRows = 10;
     private final int boardCols = 10;
     private GameBoard myBoard;
@@ -30,22 +35,56 @@ public class BotBattleActivity extends AppCompatActivity {
     private GridLayout botGridLayout;
     private Handler handler; // Handler for managing delays
     private boolean myTurn = true;
+    private final int round = 15;
+    private int myRoundLeft = round;
+    private int botRoundLeft = round;
 
     private CountDownTimer countDownTimer;
     private TextView countdownTextView; // TextView to show the countdown
+
+    private TextView bigMineTextView;
+    private TextView bigRoundLeftIconTextView;
+    private TextView smallMineTextView;
+    private TextView smallRoundLeftTextView;
 
     private int selectedRow = -1;
     private int selectedCol = -1;
     private Button lastSelectedButton = null; // To keep track of the last selected button
     String selectTextHolder; // hold the stuff on the cell
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bot_battle);
+
+        Button btnLaunch = findViewById(R.id.buttonLaunch);
+        Button btnQuit = findViewById(R.id.buttonQuit);
+        bigMineTextView = findViewById(R.id.bigMineTextView);
+        bigRoundLeftIconTextView = findViewById(R.id.bigRoundLeftIconTextView);
+        smallMineTextView = findViewById(R.id.smallMineTextView);
+        smallRoundLeftTextView = findViewById(R.id.smallRoundLeftTextView);
+        bigRoundLeftIconTextView.setText(String.valueOf(round));
+        smallRoundLeftTextView.setText(String.valueOf(round));
+
         handler = new Handler(Looper.getMainLooper());
         countdownTextView = findViewById(R.id.countdownTextView); // Assuming you have this in your layout
+
+        // Link back button with quit
+        OnBackPressedCallback callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showQuitConfirmationDialog(); // Show the same quit confirmation dialog
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, callback);
 
         // Initialize the countdown timer for 10 seconds
         countDownTimer = new CountDownTimer(10000, 1000) {
@@ -82,8 +121,6 @@ public class BotBattleActivity extends AppCompatActivity {
         bot = new BotPlayer(boardRows, boardCols);
         botBoard = bot.getBotBoard();
 
-        // Set the hit button, after hit ai attack
-        Button btnLaunch = findViewById(R.id.buttonLaunch);
 
         // Draw the game board
         botGridLayout = findViewById(R.id.gridLayoutMinePlacement);
@@ -175,13 +212,13 @@ public class BotBattleActivity extends AppCompatActivity {
 
                 myGridLayout.addView(button);
 
-                // Set click action
+                 // Set click action, click on small board for test
                 final int row = i;
                 final int col = j;
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        onCellConfirm(row, col, myBoard, myGridLayout, 10, true);
+                        revealCell(row, col, myBoard, myGridLayout, 10, true);
                     }
                 });
             }
@@ -195,6 +232,13 @@ public class BotBattleActivity extends AppCompatActivity {
             }
         });
 
+        // Quit button
+        btnQuit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showQuitConfirmationDialog();
+            }
+        });
 
     }
 
@@ -219,8 +263,9 @@ public class BotBattleActivity extends AppCompatActivity {
         lastSelectedButton = button; // Keep track of this button
     }
 
-    // Action when launch is clicked
-    private void onCellConfirm(int row, int col, GameBoard board, GridLayout gridLayout, int textSize, boolean player) {  // 0 bot, 1 player
+
+    // reveal cell, show mine if found, show number if not found
+    private void revealCell(int row, int col, GameBoard board, GridLayout gridLayout, int textSize, boolean player) {  // 0 bot, 1 player
         Button button = (Button) gridLayout.getChildAt(row * boardCols + col);
         button.setTextColor(Color.WHITE);
         // The mine is found
@@ -242,7 +287,7 @@ public class BotBattleActivity extends AppCompatActivity {
             for (int i=0; i < boardRows; i++) {
                 for (int j=0; j < boardCols; j++) {
                     if (board.isCellClicked(i,j) && !board.hadMine(i,j)) {
-                        onCellConfirm(i, j, board, gridLayout, textSize, player);
+                        revealCell(i, j, board, gridLayout, textSize, player);
                     }
                 }
             }
@@ -287,38 +332,176 @@ public class BotBattleActivity extends AppCompatActivity {
 
     }
 
-    private void botMove() {
-        int[] move = bot.attack(myBoard);
-        onCellConfirm(move[0], move[1], myBoard, myGridLayout, 10, true);
-    }
 
+    // when launch is clicked
     private void launchConfirm() {
         if (myTurn && lastSelectedButton != null) {
+            // Stop the timer
             countDownTimer.cancel();
-            onCellConfirm(selectedRow, selectedCol, botBoard, botGridLayout, 20, false);
-            if (lastSelectedButton != null) {
-                selectTextHolder = lastSelectedButton.getText().toString();
+
+            // reveal the cell selected
+            revealCell(selectedRow, selectedCol, botBoard, botGridLayout, 20, false);
+            myRoundLeft--;
+
+            // Check game end will exist game if true
+            if (!checkGameEnd()) {
+                // Set up last button, turn, round, and click
+                if (lastSelectedButton != null) {
+                    selectTextHolder = lastSelectedButton.getText().toString();
+                }
+                lastSelectedButton = null;
+                myTurn = false;
+                setGridLayoutEnabled(false);
+                // Set the Mine left and round left for big board
+                bigMineTextView.setText(String.valueOf(botBoard.getMineLeftCount()));
+                bigRoundLeftIconTextView.setText(String.valueOf(this.myRoundLeft));
+
+                // Start Counter and let opponent move
+                countDownTimer.start();
+                botMove();
             }
-            lastSelectedButton = null;
-            myTurn = false;
+        }
+    }
 
-            // Introduce a delay before the bot makes its move
-            Random random = new Random();
-            //int randomDelay = random.nextInt(2000) + 1500;
-            int randomDelay = random.nextInt(500); // set low for testing
 
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    botMove(); // Bot's move after the delay
+    private void botMove() {
+        int[] move = bot.attack(myBoard);
+        Button button = (Button) myGridLayout.getChildAt(move[0] * boardCols + move[1]);
+        button.setText("\u274C"); // this is a cross
+        button.setTextColor(Color.parseColor("#E6301F"));
+        button.setGravity(Gravity.CENTER);
+        button.setTextSize(10);
+        button.setPadding(1, 1, 1, 1);
+
+        // Introduce a delay before the bot makes its move
+        Random random = new Random();
+        //int randomDelay = random.nextInt(2000) + 1500;
+        int randomDelay = random.nextInt(100) + botDelay; // set low for testing
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                revealCell(move[0], move[1], myBoard, myGridLayout, 10, true);
+                botRoundLeft--;
+                if (!checkGameEnd()) {
+
                     if (lastSelectedButton != null) {
                         lastSelectedButton.setText(selectTextHolder); // rest the last button
                     }
                     myTurn = true;
+
+                    // Set the Mine left and round left for big board
+                    smallMineTextView.setText(String.valueOf(myBoard.getMineLeftCount()));
+                    smallRoundLeftTextView.setText(String.valueOf(botRoundLeft));
+
+                    setGridLayoutEnabled(true);
+                    countDownTimer.cancel();
+                    countDownTimer.start();
                 }
-            }, randomDelay);
-            countDownTimer.start();
+
+            }
+        }, randomDelay);
+    }
+
+
+    // Used to disable click when the oppnent hit, skip the cell already clicked
+    private void setGridLayoutEnabled(boolean enabled) {
+        for (int i = 0; i < botGridLayout.getChildCount(); i++) {
+            int row = i / boardCols;
+            int col = i % boardCols;
+
+            if (!botBoard.isCellClicked(row, col)) {  // Skip the cell if it is already clicked
+                View child = botGridLayout.getChildAt(i);
+                child.setEnabled(enabled);
+            }
         }
     }
+
+
+    private void showQuitConfirmationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Surrender")
+                .setMessage("Are you sure you want to surrender?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showLoseDialog();
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setCancelable(false);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
+    private void showLoseDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("You Lose")
+                .setMessage("You have lost the game.")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        navigateToMain();
+                    }
+                })
+                .setCancelable(false);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
+    private void showYouWinDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Winner")
+                .setMessage("Congratulations! You are the winner!")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        navigateToMain();
+                    }
+                })
+                .setCancelable(false);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
+    private void navigateToMain() {
+        Intent intent = new Intent(BotBattleActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
+    }
+
+
+    private boolean checkGameEnd() {
+        // Check if all mines have been found on the bot's board (player wins)
+        if (botBoard.isAllFound()) {
+            showYouWinDialog();
+            return true;
+        }
+        // Check if all my mine get found
+        else if (myBoard.isAllFound()) {
+            showLoseDialog();
+            return true;
+        }
+        // Check if all rounds are exhausted
+        else if (myRoundLeft == 0 && botRoundLeft == 0) {
+            if (botBoard.getMineLeftCount() < myBoard.getMineLeftCount()) {
+                showYouWinDialog();
+            } else {
+                showLoseDialog();
+            }
+            return true;
+        }
+        return false;
+    }
+
 
 }
