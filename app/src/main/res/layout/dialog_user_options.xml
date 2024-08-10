@@ -5,11 +5,12 @@
     android:layout_height="wrap_content"
     android:padding="16dp"
     android:background="@android:color/white">
+
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Edit Username"
+        android:text="Username:"
         android:textSize="30sp"
         android:textStyle="bold"
         android:textColor="@android:color/black"
@@ -17,39 +18,49 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/username"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp" />
+    <TextView
+        android:id="@+id/stats"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Wins: 0 | Losses: 0 | Win Rate: 0%"
+        android:textSize="18sp"
+        android:gravity="center"
+        android:textColor="@android:color/black"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"/>
     <EditText
         android:id="@+id/username"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:hint="Enter new username"
         android:padding="12dp"
         android:background="@android:drawable/edit_text"
         android:textColor="@android:color/black"
         android:textColorHint="@android:color/darker_gray"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title"
-        app:layout_constraintBottom_toTopOf="@+id/btnSaveUsername"
-        app:layout_constraintHorizontal_bias="0.5" />
+        app:layout_constraintTop_toBottomOf="@+id/stats"
+        app:layout_constraintEnd_toStartOf="@+id/btnSaveUsername"
+        app:layout_constraintHorizontal_bias="0.5"
+        android:layout_marginTop="16dp"/>
 
     <Button
         android:id="@+id/btnSaveUsername"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Save"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:text="✓"
+        android:textSize="15sp"
         android:background="?attr/colorPrimary"
         android:textColor="@android:color/white"
         android:textStyle="bold"
         android:padding="12dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/username"
-        app:layout_constraintBottom_toTopOf="@+id/btnSignOut"
+        app:layout_constraintStart_toEndOf="@+id/username"
+        app:layout_constraintTop_toBottomOf="@+id/stats"
         app:layout_constraintHorizontal_bias="0.5"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="5dp"/>
+        android:layout_marginTop="16dp"/>
 
     <Button
         android:id="@+id/btnSignOut"
@@ -66,7 +77,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"/>
-
+        android:layout_marginBottom="16dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
