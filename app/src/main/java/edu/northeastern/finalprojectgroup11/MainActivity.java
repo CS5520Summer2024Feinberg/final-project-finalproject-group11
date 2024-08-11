@@ -138,16 +138,16 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog dialog = builder.create();
 
                 // Set up the buttons
-                Button backButton = dialogView.findViewById(R.id.backButton);
+//                Button backButton = dialogView.findViewById(R.id.backButton);
                 Button btnCreateRoom = dialogView.findViewById(R.id.button1);
                 Button btnJoinRoom = dialogView.findViewById(R.id.button2);
 
-                backButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        dialog.dismiss(); // Dismiss the dialog
-                    }
-                });
+//                backButton.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        dialog.dismiss(); // Dismiss the dialog
+//                    }
+//                });
                 // create room
                 btnCreateRoom.setOnClickListener(new View.OnClickListener() {
                     @Override

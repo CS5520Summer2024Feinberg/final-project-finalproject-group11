@@ -7,46 +7,52 @@
     android:padding="12dp">
 
     <!-- Back Button to close the dialog -->
-    <Button
-        android:id="@+id/backButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Back"
-        android:textSize="12dp"
-        android:textStyle="bold"
-        android:layout_margin="10dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
 
     <!-- Button 1 -->
+
+    <!-- Button 2 -->
+
+<!--    <Button-->
+<!--        android:id="@+id/backButton"-->
+<!--        android:layout_width="64dp"-->
+<!--        android:layout_height="36dp"-->
+<!--        android:layout_margin="1dp"-->
+<!--        android:layout_marginTop="4dp"-->
+<!--        android:text="BACK"-->
+<!--        android:textSize="12sp"-->
+<!--        android:textStyle="bold"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent" />-->
+
     <Button
         android:id="@+id/button1"
         android:layout_width="130dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:layout_marginRight="20dp"
-        android:text="Create Room"
-        android:textSize="20dp"
+        android:layout_marginEnd="12dp"
         android:background="?attr/colorAccent"
+        android:text="Create\nRoom"
         android:textColor="@android:color/white"
+        android:textSize="15sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/guidelineMid"
-        app:layout_constraintTop_toBottomOf="@id/backButton" />
+        app:layout_constraintEnd_toStartOf="@+id/guidelineMid" />
+<!--        app:layout_constraintTop_toBottomOf="@id/backButton"-->
+<!--        android:layout_marginTop="12dp" />-->
 
-    <!-- Button 2 -->
+
     <Button
         android:id="@+id/button2"
         android:layout_width="130dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        android:text="Join\nRoom"
-        android:textSize="20dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
         android:background="?attr/colorAccent"
+        android:text="Join\nRoom"
         android:textColor="@android:color/white"
+        android:textSize="15sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="@+id/button1"
         app:layout_constraintStart_toStartOf="@+id/guidelineMid" />
+<!--        app:layout_constraintTop_toBottomOf="@+id/backButton" />-->
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineMid"
