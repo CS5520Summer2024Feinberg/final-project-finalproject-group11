@@ -78,9 +78,8 @@ public class BotBattleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_bot_battle);
 
         // Load the saved volume
-        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        int savedVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
-        float volume = savedVolume / 100f;
+        Intent intent = getIntent();
+        int volume = Integer.parseInt(intent.getStringExtra("volume"));
 
         // Apply the volume to the BGMPlayer
         BGMPlayer2.getInstance(this).setVolume(volume);
