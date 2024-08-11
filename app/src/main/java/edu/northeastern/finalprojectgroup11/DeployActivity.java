@@ -39,8 +39,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
-import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
-
 public class DeployActivity extends AppCompatActivity {
     private String TAG = "DeployActivity";
     private FirebaseDatabase firebaseDatabase;
@@ -56,6 +54,7 @@ public class DeployActivity extends AppCompatActivity {
     private ValueEventListener bothReady;
     private ValueEventListener opponentStateListener;
 
+    private boolean gameStarted = false;
     private boolean isBoatPlaced = false;
 
     private GameBoard board;
@@ -74,9 +73,6 @@ public class DeployActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-//        BGMPlayer2.getInstance(this).stop();
-
 
         // Remove event listener
         if (bothReady != null) {
@@ -113,17 +109,6 @@ public class DeployActivity extends AppCompatActivity {
         }, 5000); // 5000 milliseconds delay
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-//        BGMPlayer2.getInstance(this).pause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-//        BGMPlayer2.getInstance(this).start();
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,10 +132,6 @@ public class DeployActivity extends AppCompatActivity {
             }
         };
         getOnBackPressedDispatcher().addCallback(this, callback);
-
-//        BGMPlayer2.getInstance(this).start();
-
-
         // Retrieve room code
         Intent intent = getIntent();
         roomCode = intent.getStringExtra("roomCode");
@@ -199,6 +180,11 @@ public class DeployActivity extends AppCompatActivity {
 
         // Set current player as not ready as default
         roomRef.child("players").child(UID).child("playerState").setValue("deploying");
+        // Initialize meGetHit for both player for battle activity
+        ArrayList<Integer> hitPosition = new ArrayList<>();
+        hitPosition.add(-1); // row
+        hitPosition.add(-1); // col
+        roomRef.child("players").child(UID).child("meGetHit").setValue(hitPosition);
 
         // Listener to check if both ready and enter battle
         bothReady = new ValueEventListener() {
@@ -307,6 +293,7 @@ public class DeployActivity extends AppCompatActivity {
                         Log.e(TAG, "Failed to read opponent's state: " + error.getMessage());
                     }
                 };
+
                 opponentStateRef.addValueEventListener(opponentStateListener);
             }
 
@@ -320,11 +307,25 @@ public class DeployActivity extends AppCompatActivity {
     // Action when the ready button is clicked
     public void onReadyClick() {
         if (board.isDeployReady()) {
+
             // Cancel the timer
             if (countDownTimer != null) {
                 countDownTimer.cancel();
             }
+
+            // set player state as ready
             roomRef.child("players").child(UID).child("playerState").setValue("ready");
+
+            // Upload the mine location when ready
+            List<String> mineLocations = board.getAllMineLocations();
+            roomRef.child("players").child(UID).child("locations").setValue(mineLocations);
+
+            // Set the trun of room to a random number
+            // The last player ready will set the random that get use
+            Random random = new Random();
+            int firstTurn = random.nextInt(2) + 1; // 1 or 2
+            roomRef.child("turn").setValue(firstTurn);
+
         } else {
             Toast.makeText(DeployActivity.this, "Deploy all the mines before start.", Toast.LENGTH_SHORT).show();
         }
@@ -369,23 +370,10 @@ public class DeployActivity extends AppCompatActivity {
                     }
                 }
                 if (readyCount == 2) {
-                    // Retrieve mine locations
-                    List<String> mineLocations = board.getAllMineLocations();
-                    // Store them in Firebase under each player's node
-                    roomRef.child("players").child(UID).child("locations").setValue(mineLocations)
-                            .addOnSuccessListener(aVoid -> {
-                                // Proceed to start the game
-                                Toast.makeText(DeployActivity.this, "game should start.", Toast.LENGTH_SHORT).show();
-                                Intent intent = new Intent(DeployActivity.this, BattleActivity.class);
-                                intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
-                                intent.putExtra("roomType", roomType); // Pass the room type (public/private) into new activity
-                                GameBoardManager.setGameBoard(board);
-                                startActivity(intent);
-                                finish();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to store mine locations: " + e.getMessage());
-                            });
+                    // Proceed to start the game
+                    storeOpponentBoard_andStartBattle();
+
+
                 }
             }
 
@@ -428,8 +416,8 @@ public class DeployActivity extends AppCompatActivity {
 
     private void showQuitConfirmationDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Quit")
-                .setMessage("Are you sure you want to quit the game?")
+        builder.setTitle("Surrender")
+                .setMessage("Are you sure you want to surrender?")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -463,6 +451,7 @@ public class DeployActivity extends AppCompatActivity {
                     });
         }
     }
+
 
     private void showLoseDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -500,4 +489,77 @@ public class DeployActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
+
+    // Retrieve opponent mine location and set a GameBoard for passing to battle
+
+    private void storeOpponentBoard_andStartBattle() {
+        // used so that it only trigger once
+        if (gameStarted) {
+            return; // Prevent multiple executions
+        }
+        gameStarted = true;
+
+
+
+        roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Get UID of the opponent
+                if (Objects.equals(snapshot.child("player1").getValue(String.class), UID)) {
+                    opponentUID = snapshot.child("player2").getValue(String.class);
+                } else {
+                    opponentUID = snapshot.child("player1").getValue(String.class);
+                }
+
+
+                // Retrieve the opponent's board
+                roomRef.child("players").child(opponentUID).child("locations").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<String> opponentMines = (List<String>) snapshot.getValue();
+                        GameBoard opponentBoard = new GameBoard(rows, cols);
+
+                        for (String location : opponentMines) {
+                            String[] parts = location.split(",");
+                            int row = Integer.parseInt(parts[0]);
+                            int col = Integer.parseInt(parts[1]);
+                            opponentBoard.placeMine(row, col);
+                        }
+
+                        GameBoardManager.setOpponentBoard(opponentBoard);
+
+                        // Log the status
+                        if (GameBoardManager.getOpponentBoard() != null) {
+                            Log.d("DeployActivity", "Opponent's board retrieved and stored successfully.");
+                        } else {
+                            Log.e("DeployActivity", "Failed to store opponent's board.");
+                        }
+
+                        Toast.makeText(DeployActivity.this, "game should start.", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(DeployActivity.this, BattleActivity.class);
+                        intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
+                        intent.putExtra("roomType", roomType); // Pass the room type (public/private) into new activity
+                        GameBoardManager.setGameBoard(board);
+                        startActivity(intent);
+                        finish();
+
+                    }
+
+
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Failed to retrieve opponent's board: " + error.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Database error: " + error.getMessage());
+            }
+        });
+    }
+
 }

@@ -2,6 +2,7 @@ package edu.northeastern.finalprojectgroup11;
 
 public class GameBoardManager {
     private static GameBoard gameBoard;
+    private static GameBoard opponentBoard;
 
     // Static method to get the GameBoard instance
     public static GameBoard getGameBoard() {
@@ -21,6 +22,23 @@ public class GameBoardManager {
     // Static method to clear the GameBoard instance
     public static void clearGameBoard() {
         gameBoard = null;
+    }
+
+    // Static method to get the GameBoard instance
+    public static GameBoard getOpponentBoard() {
+        return opponentBoard;
+    }
+
+    // Static method to set the GameBoard instance
+    public static void setOpponentBoard(GameBoard board) {
+        opponentBoard = board;
+    }
+
+    // Static method to reset the GameBoard instance
+
+    // Static method to clear the GameBoard instance
+    public static void clearOpponentBoard() {
+        opponentBoard = null;
     }
 
 }
