@@ -157,10 +157,10 @@ public class BotBattleActivity extends AppCompatActivity {
                 params.height = params.width;
                 button.setLayoutParams(params);
                 
-                // Show mine just for test
-                if (botBoard.hasMine(i, j)) {
-                    button.setText("M");
-                }
+//                // Show mine just for test
+//                if (botBoard.hasMine(i, j)) {
+//                    button.setText("M");
+//                }
 
                 // Set color based on checkerboard pattern
                 if ((i + j) % 2 == 0) {
@@ -398,6 +398,9 @@ public class BotBattleActivity extends AppCompatActivity {
             // reveal the cell selected
             revealCell(selectedRow, selectedCol, botBoard, botGridLayout, 20, false);
             myRoundLeft--;
+            // Set the Mine left and round left for big board
+            bigMineTextView.setText(String.valueOf(botBoard.getMineLeftCount()));
+            bigRoundLeftIconTextView.setText(String.valueOf(this.myRoundLeft));
 
             // Check game end will exist game if true
             if (!checkGameEnd()) {
@@ -408,9 +411,7 @@ public class BotBattleActivity extends AppCompatActivity {
                 lastSelectedButton = null;
                 myTurn = false;
                 setGridLayoutEnabled(false);
-                // Set the Mine left and round left for big board
-                bigMineTextView.setText(String.valueOf(botBoard.getMineLeftCount()));
-                bigRoundLeftIconTextView.setText(String.valueOf(this.myRoundLeft));
+
 
                 // Start Counter and let opponent move
                 countDownTimer.start();
@@ -438,6 +439,9 @@ public class BotBattleActivity extends AppCompatActivity {
             public void run() {
                 revealCell(move[0], move[1], myBoard, myGridLayout, 10, true);
                 botRoundLeft--;
+                // Set the Mine left and round left for big board
+                smallMineTextView.setText(String.valueOf(myBoard.getMineLeftCount()));
+                smallRoundLeftTextView.setText(String.valueOf(botRoundLeft));
                 if (!checkGameEnd()) {
 
                     if (lastSelectedButton != null) {
@@ -445,9 +449,7 @@ public class BotBattleActivity extends AppCompatActivity {
                     }
                     myTurn = true;
 
-                    // Set the Mine left and round left for big board
-                    smallMineTextView.setText(String.valueOf(myBoard.getMineLeftCount()));
-                    smallRoundLeftTextView.setText(String.valueOf(botRoundLeft));
+
 
                     setGridLayoutEnabled(true);
                     countDownTimer.cancel();
@@ -497,6 +499,7 @@ public class BotBattleActivity extends AppCompatActivity {
 
 
     private void showLoseDialog() {
+        countDownTimer.cancel();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("You Lose")
                 .setMessage("You have lost the game.")
@@ -513,9 +516,27 @@ public class BotBattleActivity extends AppCompatActivity {
 
 
     private void showYouWinDialog() {
+        countDownTimer.cancel();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Winner")
                 .setMessage("Congratulations! You are the winner!")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        navigateToMain();
+                    }
+                })
+                .setCancelable(false);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
+    private void showTieDialog() {
+        countDownTimer.cancel();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Tie Game")
+                .setMessage("Tie Game")
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -552,7 +573,10 @@ public class BotBattleActivity extends AppCompatActivity {
         else if (myRoundLeft == 0 && botRoundLeft == 0) {
             if (botBoard.getMineLeftCount() < myBoard.getMineLeftCount()) {
                 showYouWinDialog();
-            } else {
+            } else if (botBoard.getMineLeftCount() == myBoard.getMineLeftCount()) {
+                showTieDialog();
+            }
+            else {
                 showLoseDialog();
             }
             return true;

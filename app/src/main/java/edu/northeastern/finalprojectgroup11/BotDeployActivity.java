@@ -86,7 +86,7 @@ private int bgmVolume = 50; // Default volume (50% of max volume)
         btnSettings.setOnClickListener(v -> showSettingsDialog());
 
         // Initialize the countdown timer for 10 seconds
-        countDownTimer = new CountDownTimer(20000, 1000) {
+        countDownTimer = new CountDownTimer(30000, 1000) {
             public void onTick(long millisUntilFinished) {
                 // Update the countdown text each second
                 countdownTextView.setText("" + millisUntilFinished / 1000);
