@@ -1,5 +1,7 @@
 package edu.northeastern.finalprojectgroup11;
 
+import static android.content.ContentValues.TAG;
+
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,6 +10,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -19,10 +22,20 @@ import android.os.CountDownTimer;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.gridlayout.widget.GridLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Random;
 
@@ -64,6 +77,10 @@ public class BotBattleActivity extends AppCompatActivity {
     private static final String KEY_BGM_VOLUME = "bgmVolume";
     private int bgmVolume = 50; // Default volume (50% of max volume)
 
+    private FirebaseDatabase firebaseDatabase;
+    private FirebaseAuth mAuth;
+    private String UID;
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -92,6 +109,10 @@ public class BotBattleActivity extends AppCompatActivity {
 
         handler = new Handler(Looper.getMainLooper());
         countdownTextView = findViewById(R.id.countdownTextView); // Assuming you have this in your layout
+
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        UID = mAuth.getCurrentUser().getUid();
 
         // Link back button with quit
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
@@ -506,6 +527,7 @@ public class BotBattleActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        updateResult(false);
                         navigateToMain();
                     }
                 })
@@ -523,6 +545,7 @@ public class BotBattleActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        updateResult(true);
                         navigateToMain();
                     }
                 })
@@ -531,6 +554,31 @@ public class BotBattleActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void updateResult(boolean win) {
+        String resultType = win ? "win" : "loss";
+        DatabaseReference resultRef = firebaseDatabase.getReference("users").child(UID).child(resultType);
+        resultRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                Integer currentValue = mutableData.getValue(Integer.class);
+                if (currentValue == null) {
+                    mutableData.setValue(1); // Set to 1 if null (first win or loss)
+                } else {
+                    mutableData.setValue(currentValue + 1); // Increment the current value
+                }
+                return Transaction.success(mutableData); // Transaction success
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+                if (committed) {
+                    Log.d(TAG, "updateResult Transaction committed. " + resultType + " updated successfully.");
+                } else {
+                    Log.e(TAG, "updateResult Transaction failed: " + databaseError.getMessage());
+                }
+            }
+        });
+    }
 
     private void showTieDialog() {
         countDownTimer.cancel();
