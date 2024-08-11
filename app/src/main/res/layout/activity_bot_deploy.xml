@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="#F5F5DC"
     tools:context=".BotDeployActivity">
 
 
@@ -85,6 +85,7 @@
         app:layout_constraintTop_toTopOf="@id/guideline_bottom"
         app:layout_constraintVertical_bias="0.0" />
 
+
 <!--    this control other two-->
     <Button
         android:id="@+id/buttonReset"
@@ -126,6 +127,7 @@
         app:layout_constraintEnd_toEndOf="@id/buttonReset"
         app:layout_constraintBottom_toTopOf="@+id/buttonReset" />
 
+
     <TextView
         android:id="@+id/mineIcon"
         android:layout_width="wrap_content"
@@ -136,6 +138,7 @@
         app:layout_constraintBottom_toBottomOf="@id/mineLeftTextView"
         app:layout_constraintEnd_toStartOf="@id/mineLeftTextView" />
 
+
     <TextView
         android:id="@+id/mineLeftTextView"
         android:layout_width="40dp"
@@ -145,8 +148,9 @@
         android:gravity="center"
         android:textSize="30sp"
         android:layout_marginRight="30dp"
-        app:layout_constraintBottom_toTopOf="@id/guideline_top"
-        app:layout_constraintEnd_toStartOf="@+id/guidelineCenterH" />
+        android:textColor="#FF000000"
+    app:layout_constraintBottom_toTopOf="@id/guideline_top"
+    app:layout_constraintEnd_toStartOf="@+id/guidelineCenterH" />
 
 
     <TextView
@@ -168,6 +172,7 @@
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="@id/mineLeftTextView"
         app:layout_constraintStart_toEndOf="@+id/bigCountdownIcon" />
+
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineCenterH"

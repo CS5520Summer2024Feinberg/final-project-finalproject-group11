@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="#97C0FB" >
 
     <ImageView
         android:layout_width="wrap_content"
@@ -30,9 +31,10 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Swipe left to see the next step"
+        android:text="Swipe left to see the next step >>"
         android:textSize="20sp"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         android:gravity="center"
         android:paddingTop="10dp"/>
+
 </LinearLayout>
