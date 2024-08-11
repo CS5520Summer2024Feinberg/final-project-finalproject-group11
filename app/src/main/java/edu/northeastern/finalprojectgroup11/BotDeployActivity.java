@@ -1,5 +1,7 @@
 package edu.northeastern.finalprojectgroup11;
 
+import static android.content.ContentValues.TAG;
+
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,6 +11,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -27,6 +30,14 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.gridlayout.widget.GridLayout;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
+
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -37,22 +48,24 @@ import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
 
 //  UI: timer and mine icon, ready change color when hit link quit with back
 public class BotDeployActivity extends AppCompatActivity {
-private GameBoard board;
-private GridLayout gridLayout;
-private int rows = 10;
-private int cols = 10;
-private Random random = new Random();
-private Handler handler; // used for delay
+    private GameBoard board;
+    private GridLayout gridLayout;
+    private int rows = 10;
+    private int cols = 10;
+    private Random random = new Random();
+    private Handler handler; // used for delay
 
-private CountDownTimer countDownTimer;
-private TextView countdownTextView; // TextView to show the countdown
+    private CountDownTimer countDownTimer;
+    private TextView countdownTextView; // TextView to show the countdown
 
 
-private TextView mineLeftextView;
-
-private static final String PREFS_NAME = "BGMSettings";
-private static final String KEY_BGM_VOLUME = "bgmVolume";
-private int bgmVolume = 50; // Default volume (50% of max volume)
+    private TextView mineLeftextView;
+    private FirebaseDatabase firebaseDatabase;
+    private FirebaseAuth mAuth;
+    private String UID;
+    private static final String PREFS_NAME = "BGMSettings";
+    private static final String KEY_BGM_VOLUME = "bgmVolume";
+    private int bgmVolume = 50; // Default volume (50% of max volume)
 
 
     @Override
@@ -84,7 +97,9 @@ private int bgmVolume = 50; // Default volume (50% of max volume)
 
         ImageButton btnSettings = findViewById(R.id.btn_settings);
         btnSettings.setOnClickListener(v -> showSettingsDialog());
-
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        UID = mAuth.getCurrentUser().getUid();
         // Initialize the countdown timer for 10 seconds
         countDownTimer = new CountDownTimer(30000, 1000) {
             public void onTick(long millisUntilFinished) {
@@ -346,12 +361,39 @@ private int bgmVolume = 50; // Default volume (50% of max volume)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        updateResult(false);
                         navigateToMain();
                     }
                 })
                 .setCancelable(false);
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private void updateResult(boolean win) {
+        String resultType = win ? "win" : "loss";
+        DatabaseReference resultRef = firebaseDatabase.getReference("users").child(UID).child(resultType);
+        resultRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                Integer currentValue = mutableData.getValue(Integer.class);
+                if (currentValue == null) {
+                    mutableData.setValue(1); // Set to 1 if null (first win or loss)
+                } else {
+                    mutableData.setValue(currentValue + 1); // Increment the current value
+                }
+                return Transaction.success(mutableData); // Transaction success
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+                if (committed) {
+                    Log.d(TAG, "updateResult Transaction committed. " + resultType + " updated successfully.");
+                } else {
+                    Log.e(TAG, "updateResult Transaction failed: " + databaseError.getMessage());
+                }
+            }
+        });
     }
 
     private void navigateToMain() {
