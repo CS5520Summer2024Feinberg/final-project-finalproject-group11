@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="#F5F5DC"
     tools:context=".BotDeployActivity">
 
     <androidx.gridlayout.widget.GridLayout
@@ -56,9 +56,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Ready"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideline_bottom" />
+        android:textColor="#FF000000"
+        android:backgroundTint="#4CAF50"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/guideline_bottom" />
 
     <Button
         android:id="@+id/buttonRandom"
@@ -66,9 +68,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Random"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonReady" />
+        android:textColor="#FF000000"
+        android:backgroundTint="#FFEB3B"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/buttonReady" />
 
     <Button
         android:id="@+id/buttonReset"
@@ -76,9 +80,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Reset"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonRandom" />
+        android:textColor="#FF000000"
+        android:backgroundTint="#F36A6A"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/buttonRandom" />
 
     <Button
         android:id="@+id/buttonQuit"
@@ -86,9 +92,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Quit"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonReset" />
+        android:textColor="#FF000000"
+        android:backgroundTint="#D3D3D3"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/buttonReset" />
 
     <TextView
         android:id="@+id/mineIcon"
@@ -97,8 +105,9 @@
         android:text="\u26AB"
         android:layout_marginRight="0dp"
         android:textSize="30sp"
-        app:layout_constraintBottom_toTopOf="@id/guideline_top"
-        app:layout_constraintEnd_toStartOf="@id/mineLeftTextView" />
+        android:textColor="#FF000000"
+    app:layout_constraintBottom_toTopOf="@id/guideline_top"
+    app:layout_constraintEnd_toStartOf="@id/mineLeftTextView" />
 
     <TextView
         android:id="@+id/mineLeftTextView"
@@ -107,8 +116,9 @@
         android:text="10"
         android:textSize="30sp"
         android:layout_marginRight="30dp"
-        app:layout_constraintBottom_toTopOf="@id/guideline_top"
-        app:layout_constraintEnd_toStartOf="@+id/guidelineCenterH" />
+        android:textColor="#FF000000"
+    app:layout_constraintBottom_toTopOf="@id/guideline_top"
+    app:layout_constraintEnd_toStartOf="@+id/guidelineCenterH" />
 
     <TextView
         android:id="@+id/countdownTextView"
@@ -117,8 +127,10 @@
         android:layout_marginLeft="40dp"
         android:text="10"
         android:textSize="30sp"
-        app:layout_constraintBottom_toTopOf="@id/guideline_top"
-        app:layout_constraintStart_toEndOf="@+id/guidelineCenterH" />
+        android:textColor="#FF000000"
+    app:layout_constraintBottom_toTopOf="@id/guideline_top"
+    app:layout_constraintStart_toEndOf="@+id/guidelineCenterH" />
+
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineCenterH"

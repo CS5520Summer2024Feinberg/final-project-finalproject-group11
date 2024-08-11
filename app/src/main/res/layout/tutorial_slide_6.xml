@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="#97C0FB" >
 
     <TextView
         android:layout_width="match_parent"
@@ -22,7 +23,7 @@
         android:layout_height="wrap_content"
         android:text="You can review this tutorial in the settings."
         android:textSize="20sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="@android:color/white"
         android:gravity="center"
         android:paddingHorizontal="16dp"
         android:paddingBottom="24dp"

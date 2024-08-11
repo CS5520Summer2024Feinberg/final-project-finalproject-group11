@@ -4,7 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="#97C0FB" >
 
     <ImageView
         android:layout_width="272dp"
@@ -57,15 +58,15 @@
         android:lineSpacingMultiplier="1.2"/>
 
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="The game ends when all mines are found, or the rounds are exhausted. The player who finds the most mines wins. "
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
         android:gravity="center"
-        android:paddingTop="4dp"
-        android:paddingHorizontal="16dp"
         android:lineSpacingMultiplier="1.2"
-        android:paddingBottom="24dp"/>
+        android:paddingHorizontal="16dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="24dp"
+        android:text="The game ends when all mines are found, or the rounds are exhausted. The player who finds the most mines wins. "
+        android:textColor="@android:color/black"
+        android:textSize="18sp" />
 
 </LinearLayout>

@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F6F6F6"
+    android:background="#F5F5DC"
     tools:context=".BotDeployActivity">
 
     <!--    Big Board Here-->
@@ -47,6 +47,7 @@
         android:layout_marginRight="0dp"
         android:text="\u26AB"
         android:textSize="30sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toBottomOf="@id/bigMineTextView"
         app:layout_constraintEnd_toStartOf="@id/bigMineTextView" />
 
@@ -58,9 +59,10 @@
         android:layout_marginBottom="10dp"
         android:text="10"
         android:textSize="30sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintStart_toStartOf="parent" />
-    
+
     <TextView
         android:id="@+id/bigCountdownIcon"
         android:layout_width="wrap_content"
@@ -69,6 +71,7 @@
         android:layout_marginBottom="10dp"
         android:text="T"
         android:textSize="30sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintStart_toStartOf="@id/guidelineCenterH" />
 
@@ -80,6 +83,7 @@
         android:layout_marginBottom="10dp"
         android:text="10"
         android:textSize="30sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintStart_toEndOf="@id/bigCountdownIcon" />
 
@@ -91,6 +95,7 @@
         android:layout_marginBottom="10dp"
         android:text="R"
         android:textSize="30sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintStart_toStartOf="@id/guidelineCenterH" />
 
@@ -102,11 +107,11 @@
         android:layout_marginBottom="10dp"
         android:text="10"
         android:textSize="30sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintStart_toEndOf="@id/bigRoundLeftIcon" />
 
-
-    <!--Smaller board here    -->
+    <!-- Smaller board here -->
 
     <TextView
         android:id="@+id/smallMineIcon"
@@ -116,6 +121,7 @@
         android:layout_marginBottom="5dp"
         android:text="\u26AB"
         android:textSize="25sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/gridLayoutMyMine"
         app:layout_constraintStart_toStartOf="@id/gridLayoutMyMine" />
 
@@ -126,6 +132,7 @@
         android:layout_marginStart="5dp"
         android:text="10"
         android:textSize="25sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toBottomOf="@id/smallMineIcon"
         app:layout_constraintStart_toEndOf="@id/smallMineIcon" />
 
@@ -136,6 +143,7 @@
         android:layout_marginStart="50dp"
         android:text="R"
         android:textSize="25sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toBottomOf="@id/smallMineIcon"
         app:layout_constraintStart_toEndOf="@id/smallMineTextView" />
 
@@ -146,16 +154,18 @@
         android:layout_marginStart="5dp"
         android:text="10"
         android:textSize="25sp"
+        android:textColor="#FF000000"
         app:layout_constraintBottom_toBottomOf="@id/smallMineIcon"
         app:layout_constraintStart_toEndOf="@id/smallRoundLeftIcon" />
+
 
     <Button
         android:id="@+id/buttonLaunch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="80dp"
-        android:backgroundTint="#D92424"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="64dp"
+        android:backgroundTint="#F36A6A"
         android:padding="0dp"
         android:text="Launch"
         android:textColor="#FFFFFF"
@@ -168,8 +178,8 @@
         android:id="@+id/buttonQuit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:backgroundTint="#D92424"
+        android:layout_marginTop="140dp"
+        android:backgroundTint="#D3D3D3"
         android:text="Quit"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
