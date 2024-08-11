@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp">
+
+    <ImageView
+        android:layout_width="169dp"
+        android:layout_height="320dp"
+        android:src="@drawable/tutorial_step_4"
+        android:contentDescription="Game Battle Phase Screenshot" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Battle Phase"
+        android:textSize="24sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:paddingTop="10dp"
+        android:paddingHorizontal="16dp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Your goal is to find where your opponent has placed their mines."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:paddingHorizontal="16dp"
+        android:lineSpacingMultiplier="1.2"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="'R5' in the top left corner indicates you have 5 rounds left."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:paddingHorizontal="16dp"
+        android:lineSpacingMultiplier="1.2"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="The large board is battlefield to guess mine locations. 'LAUNCH' to confirm your guess."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:paddingHorizontal="16dp"
+        android:lineSpacingMultiplier="1.2"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="The smaller board on the lower left shows your own minefield."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:paddingHorizontal="16dp"
+        android:lineSpacingMultiplier="1.2"/>
+
+
+</LinearLayout>

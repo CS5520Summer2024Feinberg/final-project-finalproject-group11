@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,14 +8,20 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/tutorial_image_2" />
+        android:src="@drawable/tutorial_step_2"
+        android:contentDescription="Tutorial Step Image" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Learn how to use the features."
-        android:textSize="24sp"
+        android:text="Our game has three modes:\n- Play against your friends by entering a room number.\n- Play against online players.\n- Play against bots in single player mode."
+        android:textSize="20sp"
         android:textColor="@android:color/black"
         android:gravity="center"
-        android:paddingTop="24dp" />
+        android:paddingTop="24dp"
+        android:lineSpacingMultiplier="1.2"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:textAlignment="center"
+        android:padding="16dp"/>
 </LinearLayout>

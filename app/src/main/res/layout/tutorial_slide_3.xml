@@ -7,16 +7,41 @@
     android:padding="16dp">
 
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/tutorial_image_3" />
+        android:layout_width="169dp"
+        android:layout_height="330dp"
+        android:contentDescription="Game Deployment Phase Screenshot"
+        android:src="@drawable/tutorial_step_3" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="You're ready to go!"
+        android:text="Deployment Phase"
         android:textSize="24sp"
         android:textColor="@android:color/black"
         android:gravity="center"
-        android:paddingTop="24dp" />
+        android:paddingTop="1dp"
+        android:paddingHorizontal="16dp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="The countdown timer in the upper right corner tracks time left to deploy your mines."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.2"
+        android:paddingHorizontal="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="The upper left corner displays the number of mines remaining."
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.2"
+        android:paddingTop="8dp"
+        android:paddingHorizontal="16dp"/>
+
 </LinearLayout>

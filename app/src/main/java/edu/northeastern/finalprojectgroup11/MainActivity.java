@@ -285,7 +285,9 @@ public class MainActivity extends AppCompatActivity {
         Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_howToPlay);
         btnHowToPlay.setOnClickListener(v -> {
             // Handle "How to Play" button click here
-            // showHowToPlayDialog();
+            Intent intent = new Intent(this, TutorialActivity.class);
+            startActivity(intent);
+            finish();
         });
 
         settingsDialog.show();
