@@ -28,7 +28,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.bumptech.glide.Glide;
+//import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
@@ -42,8 +42,8 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
+//import java.util.ArrayList;
+//import java.util.List;
 import java.util.Random;
 
 import android.widget.LinearLayout;
@@ -66,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String PUBLIC_ROOM = "PublicRooms";
     private static final String PRIVATE_ROOM = "PrivateRooms";
 
+    private static final String PREFS_NAME = "BGMSettings";
+    private static final String KEY_BGM_VOLUME = "bgmVolume";
     private int bgmVolume = 50; // Default volume (50% of max volume)
 
     @Override
@@ -74,8 +76,14 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        BGMPlayer.getInstance(this).start();
+        // Load the saved volume
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        int savedVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
+        float volume = savedVolume / 100f;
 
+        // Apply the volume to the BGMPlayer
+        BGMPlayer.getInstance(this).setVolume(volume);
+        BGMPlayer.getInstance(this).start();
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -226,18 +234,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettingsDialog() {
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        int savedVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
+        float volume = savedVolume / 100f;
+
         Dialog settingsDialog = new Dialog(this);
         settingsDialog.setContentView(R.layout.dialog_settings);
         settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
-        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_volume);
-        seekBarVolume.setProgress(bgmVolume);
+        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_value);
+        seekBarVolume.setProgress((int) volume);
 
         seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 float volume = progress / 100f; // Convert progress to a float between 0.0 and 1.0
                 BGMPlayer.getInstance(MainActivity.this).setVolume(volume);
+
+                // Save the volume level in SharedPreferences
+                SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt(KEY_BGM_VOLUME, progress);
+                editor.apply();
             }
 
             @Override
@@ -247,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_how_to_play);
+        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_howToPlay);
         btnHowToPlay.setOnClickListener(v -> {
             // Handle "How to Play" button click here
             // showHowToPlayDialog();

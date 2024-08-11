@@ -52,7 +52,7 @@
         android:layout_height="50dp"
         android:text="✓"
         android:textSize="15sp"
-        android:background="?attr/colorPrimary"
+        android:background="?attr/colorAccent"
         android:textColor="@android:color/white"
         android:textStyle="bold"
         android:padding="12dp"

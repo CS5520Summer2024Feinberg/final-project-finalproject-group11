@@ -11,7 +11,7 @@ public class BGMPlayer {
     private int currentPosition = 0;
 
     private BGMPlayer(Context context) {
-        mediaPlayer = MediaPlayer.create(context, R.raw.music_main); // Replace with your BGM file
+        mediaPlayer = MediaPlayer.create(context, R.raw.music_main);
         mediaPlayer.setLooping(true);
     }
 

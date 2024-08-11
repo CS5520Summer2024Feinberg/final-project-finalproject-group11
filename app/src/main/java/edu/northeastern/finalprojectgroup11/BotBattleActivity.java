@@ -1,7 +1,9 @@
 package edu.northeastern.finalprojectgroup11;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,6 +11,9 @@ import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.os.CountDownTimer;
 import android.widget.Toast;
@@ -20,6 +25,8 @@ import androidx.gridlayout.widget.GridLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.Random;
+
+import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
 
 
 // TODO:  step left, winner checking
@@ -52,9 +59,14 @@ public class BotBattleActivity extends AppCompatActivity {
     private Button lastSelectedButton = null; // To keep track of the last selected button
     String selectTextHolder; // hold the stuff on the cell
 
+    private static final String PREFS_NAME = "BGMSettings";
+    private static final String KEY_BGM_VOLUME = "bgmVolume";
+    private int bgmVolume = 50; // Default volume (50% of max volume)
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        BGMPlayer2.getInstance(this).stop();
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }
@@ -65,6 +77,14 @@ public class BotBattleActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bot_battle);
 
+        // Load the saved volume
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        int savedVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
+        float volume = savedVolume / 100f;
+
+        // Apply the volume to the BGMPlayer
+        BGMPlayer2.getInstance(this).setVolume(volume);
+
         Button btnLaunch = findViewById(R.id.buttonLaunch);
         Button btnQuit = findViewById(R.id.buttonQuit);
         bigMineTextView = findViewById(R.id.bigMineTextView);
@@ -73,6 +93,9 @@ public class BotBattleActivity extends AppCompatActivity {
         smallRoundLeftTextView = findViewById(R.id.smallRoundLeftTextView);
         bigRoundLeftIconTextView.setText(String.valueOf(round));
         smallRoundLeftTextView.setText(String.valueOf(round));
+
+        ImageButton btnSettings = findViewById(R.id.btn_settings);
+        btnSettings.setOnClickListener(v -> showSettingsDialog());
 
         handler = new Handler(Looper.getMainLooper());
         countdownTextView = findViewById(R.id.countdownTextView); // Assuming you have this in your layout
@@ -240,6 +263,47 @@ public class BotBattleActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void showSettingsDialog() {
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        int savedVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
+        float volume = savedVolume / 100f;
+
+        Dialog settingsDialog = new Dialog(this);
+        settingsDialog.setContentView(R.layout.dialog_settings);
+        settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_value);
+        seekBarVolume.setProgress((int) volume);
+
+        seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float volume = progress / 100f; // Convert progress to a float between 0.0 and 1.0
+                BGMPlayer2.getInstance(BotBattleActivity.this).setVolume(volume);
+
+                // Save the volume level in SharedPreferences
+                SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt(KEY_BGM_VOLUME, progress);
+                editor.apply();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_howToPlay);
+        btnHowToPlay.setOnClickListener(v -> {
+            // Handle "How to Play" button click here
+            // showHowToPlayDialog();
+        });
+
+        settingsDialog.show();
     }
 
     // Cell is selected on opponent board
@@ -476,6 +540,7 @@ public class BotBattleActivity extends AppCompatActivity {
         Intent intent = new Intent(BotBattleActivity.this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
+        BGMPlayer2.getInstance(this).stop();
         finish();
     }
 

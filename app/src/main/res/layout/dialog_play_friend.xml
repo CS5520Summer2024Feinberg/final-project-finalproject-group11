@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:text="Back"
         android:textSize="12dp"
+        android:textStyle="bold"
         android:layout_margin="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -27,7 +28,9 @@
         android:layout_marginRight="20dp"
         android:text="Create Room"
         android:textSize="20dp"
-
+        android:background="?attr/colorAccent"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/guidelineMid"
         app:layout_constraintTop_toBottomOf="@id/backButton" />
 
@@ -37,8 +40,11 @@
         android:layout_width="130dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
-        android:text="Join Room"
+        android:text="Join\nRoom"
         android:textSize="20dp"
+        android:background="?attr/colorAccent"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
         app:layout_constraintTop_toTopOf="@+id/button1"
         app:layout_constraintStart_toStartOf="@+id/guidelineMid" />
 

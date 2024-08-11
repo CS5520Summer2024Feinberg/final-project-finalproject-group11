@@ -1,0 +1,492 @@
+Index: app/src/main/java/edu/northeastern/finalprojectgroup11/DeployActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package edu.northeastern.finalprojectgroup11;\r\n\r\nimport android.content.ClipData;\r\nimport android.content.DialogInterface;\r\nimport android.content.Intent;\r\nimport android.os.Bundle;\r\nimport android.os.Handler;\r\nimport android.util.Log;\r\nimport android.view.DragEvent;\r\nimport android.view.View;\r\nimport android.widget.Button;\r\nimport android.widget.GridLayout;\r\nimport android.widget.TextView;\r\nimport android.widget.Toast;\r\n\r\nimport androidx.activity.EdgeToEdge;\r\nimport androidx.activity.OnBackPressedCallback;\r\nimport androidx.annotation.NonNull;\r\nimport androidx.appcompat.app.AlertDialog;\r\nimport androidx.appcompat.app.AppCompatActivity;\r\nimport androidx.core.content.ContextCompat;\r\nimport androidx.core.graphics.Insets;\r\nimport androidx.core.view.ViewCompat;\r\nimport androidx.core.view.WindowInsetsCompat;\r\n\r\nimport com.google.firebase.auth.FirebaseAuth;\r\nimport com.google.firebase.database.DataSnapshot;\r\nimport com.google.firebase.database.DatabaseError;\r\nimport com.google.firebase.database.DatabaseReference;\r\nimport com.google.firebase.database.FirebaseDatabase;\r\nimport com.google.firebase.database.ValueEventListener;\r\n\r\nimport java.util.ArrayList;\r\nimport java.util.List;\r\nimport java.util.Objects;\r\n\r\npublic class DeployActivity extends AppCompatActivity {\r\n    private String TAG = \"DeployActivity\";\r\n    private FirebaseDatabase firebaseDatabase;\r\n    private FirebaseAuth mAuth;\r\n\r\n    private String roomCode;\r\n    private String roomType;\r\n    private String UID;\r\n    private String opponentUID;\r\n    private DatabaseReference roomRef;\r\n    private TextView dragTextView;\r\n    Button btnReady;\r\n\r\n    private ValueEventListener bothReady;\r\n    private ValueEventListener opponentStateListener;\r\n\r\n    private boolean isBoatPlaced = false;\r\n\r\n\r\n    @Override\r\n    protected void onDestroy() {\r\n        super.onDestroy();\r\n\r\n        // Remove event listener\r\n        if (bothReady != null) {\r\n            roomRef.child(\"players\").removeEventListener(bothReady);\r\n        }\r\n        if (opponentStateListener != null) {\r\n            roomRef.child(\"players\").child(opponentUID).child(\"playerState\").removeEventListener(opponentStateListener);\r\n        }\r\n\r\n        // Delay the execution of the code by 5 second\r\n        new Handler().postDelayed(new Runnable() {\r\n            @Override\r\n            public void run() {\r\n                if (roomRef != null && UID != null) {\r\n                    // Check the current state of the user\r\n                    roomRef.child(\"players\").child(UID).child(\"playerState\").addListenerForSingleValueEvent(new ValueEventListener() {\r\n                        @Override\r\n                        public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                            String currentState = snapshot.getValue(String.class);\r\n                            if (\"win\".equals(currentState) || \"lose\".equals(currentState)) {\r\n                                roomRef.child(\"players\").child(UID).child(\"playerState\").setValue(\"quit\");\r\n                            }\r\n                        }\r\n\r\n                        @Override\r\n                        public void onCancelled(@NonNull DatabaseError error) {\r\n                            Log.e(TAG, \"Failed to read player's state: \" + error.getMessage());\r\n                        }\r\n                    });\r\n                }\r\n            }\r\n        }, 5000); // 5000 milliseconds delay\r\n    }\r\n\r\n\r\n    @Override\r\n    protected void onCreate(Bundle savedInstanceState) {\r\n        super.onCreate(savedInstanceState);\r\n        EdgeToEdge.enable(this);\r\n        setContentView(R.layout.activity_deploy);\r\n\r\n        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {\r\n            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());\r\n            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);\r\n            return insets;\r\n        });\r\n        OnBackPressedCallback callback = new OnBackPressedCallback(true) {\r\n            @Override\r\n            public void handleOnBackPressed() {\r\n                showQuitConfirmationDialog(); // Show the same quit confirmation dialog\r\n            }\r\n        };\r\n        getOnBackPressedDispatcher().addCallback(this, callback);\r\n        // Retrieve room code\r\n        Intent intent = getIntent();\r\n        roomCode = intent.getStringExtra(\"roomCode\");\r\n\r\n        // Link to firebase\r\n        firebaseDatabase = FirebaseDatabase.getInstance();\r\n        mAuth = FirebaseAuth.getInstance();\r\n        UID = mAuth.getCurrentUser().getUid();\r\n        roomType = intent.getStringExtra(\"roomType\");\r\n        roomRef = firebaseDatabase.getReference(roomType).child(roomCode);\r\n\r\n        // show room code\r\n        TextView roomCodeTextView = findViewById(R.id.textViewRoom);\r\n        roomCodeTextView.setText(roomCode);\r\n\r\n        // Set current player as not ready as default\r\n        roomRef.child(\"players\").child(UID).child(\"playerState\").setValue(\"deploying\");\r\n\r\n        // Button to set ready\r\n        btnReady = findViewById(R.id.buttonReady);\r\n        btnReady.setEnabled(false);\r\n        btnReady.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (isBoatPlaced) {\r\n                    roomRef.child(\"players\").child(UID).child(\"playerState\").setValue(\"ready\");\r\n                } else {\r\n                    Toast.makeText(DeployActivity.this, \"Please place the boat on the grid before readying up.\", Toast.LENGTH_SHORT).show();\r\n                }            }\r\n        });\r\n\r\n        // Listener to check if both ready and enter battle\r\n        bothReady = new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                checkReady(roomRef);\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n                Toast.makeText(DeployActivity.this, \"Failed to check players' status.\", Toast.LENGTH_SHORT).show();\r\n            }\r\n        };\r\n        roomRef.child(\"players\").addValueEventListener(bothReady);\r\n\r\n        // Button to quit game\r\n        Button btnQuit = findViewById(R.id.buttonQuit);\r\n        btnQuit.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                showQuitConfirmationDialog();\r\n            }\r\n        });\r\n\r\n        // Drag stuff\r\n        // Set up the drag listener for the TextView\r\n        dragTextView = findViewById(R.id.dragTextView);\r\n\r\n        dragTextView.setOnLongClickListener(new View.OnLongClickListener() {\r\n            @Override\r\n            public boolean onLongClick(View v) {\r\n                ClipData data = ClipData.newPlainText(\"\", \"\");\r\n                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(v);\r\n                v.startDragAndDrop(data, shadowBuilder, v, 0);\r\n                return true;\r\n            }\r\n        });\r\n\r\n        // Set up the drag listener for the GridLayout\r\n        GridLayout gridLayout = findViewById(R.id.gridLayout);\r\n        for (int i = 0; i < gridLayout.getChildCount(); i++) {\r\n            View block = gridLayout.getChildAt(i);\r\n            block.setOnDragListener(new DeployActivity.MyDragListener());\r\n        }\r\n\r\n        // Get information of the opponent\r\n        roomRef.addListenerForSingleValueEvent(new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                // Get UID of the opponent\r\n                if (Objects.equals(snapshot.child(\"player1\").getValue(String.class), UID)) {\r\n                    opponentUID = snapshot.child(\"player2\").getValue(String.class);\r\n                } else {\r\n                    opponentUID = snapshot.child(\"player1\").getValue(String.class);\r\n                }\r\n\r\n                // Listen to opponent's state changes\r\n                DatabaseReference opponentStateRef = roomRef.child(\"players\").child(opponentUID).child(\"playerState\");\r\n                opponentStateListener = new ValueEventListener() {\r\n                    @Override\r\n                    public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                        String state = snapshot.getValue(String.class);\r\n                        if (\"lose\".equals(state)) {\r\n                            showYouWinDialog();\r\n                        }\r\n                    }\r\n\r\n                    @Override\r\n                    public void onCancelled(@NonNull DatabaseError error) {\r\n                        Log.e(TAG, \"Failed to read opponent's state: \" + error.getMessage());\r\n                    }\r\n                };\r\n                opponentStateRef.addValueEventListener(opponentStateListener);\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n                Log.e(TAG, \"Database error: \" + error.getMessage());\r\n            }\r\n        });\r\n\r\n    }\r\n\r\n    // Check if both players are ready and start game activity if ready\r\n    private void checkReady(DatabaseReference roomRef) {\r\n        roomRef.child(\"players\").addListenerForSingleValueEvent(new ValueEventListener() {\r\n            int readyCount = 0;\r\n\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                for (DataSnapshot playerSnapshot : snapshot.getChildren()) {\r\n                    String ready = playerSnapshot.child(\"playerState\").getValue(String.class);\r\n                    assert ready != null;\r\n                    if (ready.equals(\"ready\")) {\r\n                        readyCount++;\r\n                    }\r\n                }\r\n\r\n                if (readyCount == 2) {\r\n                    Toast.makeText(DeployActivity.this, \"game should start.\", Toast.LENGTH_SHORT).show();\r\n                    Intent intent = new Intent(DeployActivity.this, BattleActivity.class);\r\n                    intent.putExtra(\"roomCode\",roomCode); // Pass the room code into new activity\r\n                    intent.putExtra(\"roomType\", roomType); // Pass the room type (public/private) into new activity\r\n                    startActivity(intent);\r\n                    finish();\r\n\r\n                }\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n                Toast.makeText(DeployActivity.this, \"Failed to update players' status.\", Toast.LENGTH_SHORT).show();\r\n            }\r\n        });\r\n    }\r\n\r\n    private void showQuitConfirmationDialog() {\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        builder.setTitle(\"Quit\")\r\n                .setMessage(\"Are you sure you want to quit the game?\")\r\n                .setPositiveButton(\"Yes\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        quitGame();\r\n                    }\r\n                })\r\n                .setNegativeButton(\"No\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        dialog.dismiss();\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n\r\n        AlertDialog dialog = builder.create();\r\n        dialog.show();\r\n    }\r\n\r\n    private void quitGame() {\r\n        if (UID != null && roomRef != null) {\r\n            roomRef.child(\"players\").child(UID).child(\"playerState\").setValue(\"lose\")\r\n                    .addOnCompleteListener(task -> {\r\n                        if (task.isSuccessful()) {\r\n                            roomRef.child(\"players\").child(opponentUID).child(\"playerState\").setValue(\"win\")\r\n                                    .addOnCompleteListener(task1 -> {\r\n                                        if (task1.isSuccessful()) {\r\n                                            showLoseDialog();\r\n                                        }\r\n                                    });\r\n                        }\r\n                    });\r\n        }\r\n    }\r\n\r\n    private class MyDragListener implements View.OnDragListener {\r\n\r\n        @Override\r\n        public boolean onDrag(View v, DragEvent event) {\r\n            switch (event.getAction()) {\r\n                case DragEvent.ACTION_DRAG_STARTED:\r\n                    return true;\r\n\r\n                case DragEvent.ACTION_DRAG_ENTERED:\r\n                    v.setBackgroundColor(getResources().getColor(android.R.color.holo_orange_light)); // Highlight the target\r\n                    return true;\r\n\r\n                case DragEvent.ACTION_DRAG_EXITED:\r\n                    v.setBackgroundColor(getResources().getColor(android.R.color.darker_gray)); // Revert the highlight\r\n                    return true;\r\n\r\n                case DragEvent.ACTION_DROP:\r\n                    View draggedView = (View) event.getLocalState();\r\n                    // Calculate the center position of the target block\r\n                    float targetX = v.getX() + (v.getWidth() - draggedView.getWidth()) / 2;\r\n                    float targetY = v.getY() + (v.getHeight() - draggedView.getHeight()) / 2;\r\n                    draggedView.setX(targetX);\r\n                    draggedView.setY(targetY);\r\n\r\n                    // Get the location of the block\r\n                    String location = ((TextView) v).getText().toString();\r\n                    // Convert location string \"[row,col]\" to List<Integer>\r\n                    String[] parts = location.replaceAll(\"[\\\\[\\\\]]\", \"\").split(\",\");\r\n                    List<Integer> coordinates = new ArrayList<>();\r\n                    //coordinates.add(Integer.parseInt(parts[0].trim()));\r\n                    //coordinates.add(Integer.parseInt(parts[1].trim()));\r\n                    // Update the boat location in the database\r\n                    roomRef.child(\"players\").child(UID).child(\"boat1Location\").child(\"row\").setValue(Integer.parseInt(parts[0].trim()));\r\n                    roomRef.child(\"players\").child(UID).child(\"boat1Location\").child(\"col\").setValue(Integer.parseInt(parts[1].trim()));\r\n\r\n                    isBoatPlaced = true;\r\n                    btnReady.setEnabled(true);\r\n\r\n                    return true;\r\n\r\n\r\n                case DragEvent.ACTION_DRAG_ENDED:\r\n                    v.setBackgroundColor(ContextCompat.getColor(DeployActivity.this, android.R.color.darker_gray)); // Revert the highlight\r\n                    return true;\r\n\r\n                default:\r\n                    break;\r\n            }\r\n            return false;\r\n        }\r\n    }\r\n    private void showLoseDialog() {\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        builder.setTitle(\"You Lose\")\r\n                .setMessage(\"You have lost the game.\")\r\n                .setPositiveButton(\"OK\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        navigateToMain();\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n\r\n        AlertDialog dialog = builder.create();\r\n        dialog.show();\r\n    }\r\n    private void showYouWinDialog() {\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        builder.setTitle(\"Winner\")\r\n                .setMessage(\"Congratulations! You are the winner!\")\r\n                .setPositiveButton(\"OK\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        navigateToMain();\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n        AlertDialog dialog = builder.create();\r\n        dialog.show();\r\n    }\r\n\r\n    private void navigateToMain() {\r\n        Intent intent = new Intent(DeployActivity.this, MainActivity.class);\r\n        intent.putExtra(\"roomType\", roomType); // Pass the room type (public/private) into new activity\r\n        startActivity(intent);\r\n        finish();\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/edu/northeastern/finalprojectgroup11/DeployActivity.java b/app/src/main/java/edu/northeastern/finalprojectgroup11/DeployActivity.java
+--- a/app/src/main/java/edu/northeastern/finalprojectgroup11/DeployActivity.java	(revision b9d05676e7e03c05f08099dc94e03e1bf0b79d36)
++++ b/app/src/main/java/edu/northeastern/finalprojectgroup11/DeployActivity.java	(date 1723279886833)
+@@ -34,6 +34,8 @@
+ import java.util.List;
+ import java.util.Objects;
+ 
++import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
++
+ public class DeployActivity extends AppCompatActivity {
+     private String TAG = "DeployActivity";
+     private FirebaseDatabase firebaseDatabase;
+@@ -52,11 +54,25 @@
+ 
+     private boolean isBoatPlaced = false;
+ 
++    @Override
++    protected void onPause() {
++        super.onPause();
++//        BGMPlayer2.getInstance(this).pause();
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++//        BGMPlayer2.getInstance(this).start();
++    }
+ 
+     @Override
+     protected void onDestroy() {
+         super.onDestroy();
+ 
++//        BGMPlayer2.getInstance(this).stop();
++
++
+         // Remove event listener
+         if (bothReady != null) {
+             roomRef.child("players").removeEventListener(bothReady);
+@@ -109,6 +125,10 @@
+             }
+         };
+         getOnBackPressedDispatcher().addCallback(this, callback);
++
++//        BGMPlayer2.getInstance(this).start();
++
++
+         // Retrieve room code
+         Intent intent = getIntent();
+         roomCode = intent.getStringExtra("roomCode");
+Index: app/src/main/java/edu/northeastern/finalprojectgroup11/MainActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package edu.northeastern.finalprojectgroup11;\r\n\r\nimport static android.content.ContentValues.TAG;\r\n\r\nimport android.app.Dialog;\r\nimport android.content.DialogInterface;\r\nimport android.content.Intent;\r\nimport android.content.SharedPreferences;\r\nimport android.os.Bundle;\r\nimport android.util.Log;\r\nimport android.view.LayoutInflater;\r\nimport android.view.View;\r\nimport android.widget.Button;\r\nimport android.widget.EditText;\r\nimport android.widget.ImageButton;\r\nimport android.widget.SeekBar;\r\nimport android.widget.Toast;\r\n\r\nimport androidx.activity.EdgeToEdge;\r\nimport androidx.annotation.NonNull;\r\nimport androidx.appcompat.app.AlertDialog;\r\nimport androidx.appcompat.app.AppCompatActivity;\r\nimport androidx.core.graphics.Insets;\r\nimport androidx.core.view.ViewCompat;\r\nimport androidx.core.view.WindowInsetsCompat;\r\n\r\nimport com.google.firebase.auth.FirebaseAuth;\r\nimport com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;\r\nimport com.google.firebase.auth.FirebaseAuthInvalidUserException;\r\nimport com.google.firebase.auth.FirebaseAuthUserCollisionException;\r\nimport com.google.firebase.auth.FirebaseUser;\r\nimport com.google.firebase.database.DataSnapshot;\r\nimport com.google.firebase.database.DatabaseError;\r\nimport com.google.firebase.database.DatabaseReference;\r\nimport com.google.firebase.database.FirebaseDatabase;\r\nimport com.google.firebase.database.ValueEventListener;\r\n\r\nimport java.time.LocalDateTime;\r\nimport java.time.ZoneOffset;\r\nimport java.util.Random;\r\n\r\nimport android.widget.LinearLayout;\r\n\r\nimport edu.northeastern.finalprojectgroup11.Music.BGMPlayer;\r\n\r\npublic class MainActivity extends AppCompatActivity {\r\n    private SharedPreferences sharedPreferences;\r\n    private FirebaseAuth mAuth;\r\n    private FirebaseDatabase firebaseDatabase;\r\n    private DatabaseReference userStatusRef;\r\n    private Button btnLogin;\r\n    private String currentUID;\r\n    private DatabaseReference roomRef;\r\n    private final int maxRoomCount = 2;\r\n    private ValueEventListener player2Join;\r\n\r\n    private AlertDialog roomDialog;\r\n\r\n    private static final String PUBLIC_ROOM = \"PublicRooms\";\r\n    private static final String PRIVATE_ROOM = \"PrivateRooms\";\r\n\r\n    private int bgmVolume = 50; // Default volume (50% of max volume)\r\n\r\n    @Override\r\n    protected void onCreate(Bundle savedInstanceState) {\r\n        super.onCreate(savedInstanceState);\r\n        EdgeToEdge.enable(this);\r\n        setContentView(R.layout.activity_main);\r\n\r\n        BGMPlayer.getInstance(this).start();\r\n\r\n        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {\r\n            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());\r\n            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);\r\n            return insets;\r\n        });\r\n\r\n        Button btnBot = findViewById(R.id.test_btn);\r\n        btnBot.setOnClickListener(new View.OnClickListener() {\r\n\r\n            @Override\r\n            public void onClick(View v) {\r\n                Intent intent = new Intent(MainActivity.this, BotDeployActivity.class);\r\n                startActivity(intent);\r\n            }\r\n        });\r\n\r\n\r\n        sharedPreferences = getSharedPreferences(\"Battleship\", MODE_PRIVATE);\r\n        currentUID = sharedPreferences.getString(\"UID\", null);\r\n\r\n        // Initialize Firebase Auth and Database\r\n        mAuth = FirebaseAuth.getInstance();\r\n        firebaseDatabase = FirebaseDatabase.getInstance();\r\n\r\n        // Check if user is logged in and update UI accordingly\r\n        FirebaseUser currentUser = mAuth.getCurrentUser();\r\n        if (currentUser == null) {\r\n            signInAnonymously();\r\n        } else {\r\n            currentUID = currentUser.getUid();\r\n            setUserOnlineStatus(currentUID, true);\r\n            updateUsernameUI();\r\n        }\r\n\r\n        btnLogin = findViewById(R.id.login_btn);\r\n        btnLogin.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (currentUID != null) {\r\n                    checkIfGuestAndShowLoginDialog();\r\n                } else {\r\n                    showLoginDialog();\r\n                }\r\n            }\r\n        });\r\n\r\n        // show diaglog to create and join room\r\n        Button btnPlay = findViewById(R.id.play_friend_btn);\r\n        btnPlay.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View view) {\r\n                // Inflate the custom layout\r\n                LayoutInflater inflater = getLayoutInflater();\r\n                View dialogView = inflater.inflate(R.layout.dialog_play_friend, null);\r\n\r\n                // Create the dialog\r\n                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);\r\n                builder.setView(dialogView);\r\n                AlertDialog dialog = builder.create();\r\n\r\n                // Set up the buttons\r\n                Button backButton = dialogView.findViewById(R.id.backButton);\r\n                Button btnCreateRoom = dialogView.findViewById(R.id.button1);\r\n                Button btnJoinRoom = dialogView.findViewById(R.id.button2);\r\n\r\n                backButton.setOnClickListener(new View.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        dialog.dismiss(); // Dismiss the dialog\r\n                    }\r\n                });\r\n                // create room\r\n                btnCreateRoom.setOnClickListener(new View.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        createRoom();\r\n                        dialog.dismiss();\r\n                    }\r\n                });\r\n                // join room\r\n                btnJoinRoom.setOnClickListener(new View.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(View v) {\r\n                        showJoinRoomDialog();\r\n                        dialog.dismiss();\r\n                    }\r\n                });\r\n\r\n                // Show the dialog\r\n                dialog.show();\r\n            }\r\n        });\r\n\r\n        Button btnPlayOnline = findViewById(R.id.play_online_btn);\r\n        btnPlayOnline.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                DatabaseReference roomsRef = firebaseDatabase.getReference(PUBLIC_ROOM);\r\n\r\n                // Search for a room with only one player (where the game state is \"waiting\")\r\n                roomsRef.orderByChild(\"gameState\").equalTo(\"waiting\").addListenerForSingleValueEvent(new ValueEventListener() {\r\n                    @Override\r\n                    public void onDataChange(DataSnapshot dataSnapshot) {\r\n                        boolean roomFound = false;\r\n\r\n                        for (DataSnapshot roomSnapshot : dataSnapshot.getChildren()) {\r\n                            String roomKey = roomSnapshot.getKey();\r\n                            String player2 = roomSnapshot.child(\"player2\").getValue(String.class);\r\n\r\n                            // Check if player2 is null, indicating that the room is joinable\r\n                            if (player2 == null) {\r\n                                joinRoomOnline(roomKey);\r\n                                roomFound = true;\r\n                                break;\r\n                            }\r\n                        }\r\n\r\n                        // If no joinable room was found, create a new room\r\n                        if (!roomFound) {\r\n                            createRoomOnline();\r\n                        }\r\n                    }\r\n\r\n                    @Override\r\n                    public void onCancelled(DatabaseError databaseError) {\r\n                        // Handle possible errors\r\n                        Log.e(\"Firebase\", \"Error while searching for a room: \" + databaseError.getMessage());\r\n                    }\r\n                });\r\n            }\r\n        });\r\n\r\n        ImageButton btnSettings = findViewById(R.id.btn_settings);\r\n        btnSettings.setOnClickListener(v -> showSettingsDialog());\r\n    }\r\n\r\n    private void showSettingsDialog() {\r\n        Dialog settingsDialog = new Dialog(this);\r\n        settingsDialog.setContentView(R.layout.dialog_settings);\r\n        settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);\r\n\r\n        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_volume);\r\n        seekBarVolume.setProgress(bgmVolume);\r\n\r\n        seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {\r\n            @Override\r\n            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {\r\n                float volume = progress / 100f; // Convert progress to a float between 0.0 and 1.0\r\n                BGMPlayer.getInstance(MainActivity.this).setVolume(volume);\r\n            }\r\n\r\n            @Override\r\n            public void onStartTrackingTouch(SeekBar seekBar) {}\r\n\r\n            @Override\r\n            public void onStopTrackingTouch(SeekBar seekBar) {}\r\n        });\r\n\r\n        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_how_to_play);\r\n        btnHowToPlay.setOnClickListener(v -> {\r\n            // Handle \"How to Play\" button click here\r\n//            showHowToPlayDialog();\r\n        });\r\n\r\n        settingsDialog.show();\r\n    }\r\n\r\n    private void signInAnonymously() {\r\n        mAuth.signInAnonymously()\r\n                .addOnCompleteListener(this, task -> {\r\n                    if (task.isSuccessful()) {\r\n                        FirebaseUser user = mAuth.getCurrentUser();\r\n                        if (user != null) {\r\n                            currentUID = user.getUid();\r\n                            String guestUsername = \"Guest\" + new Random().nextInt(1000);\r\n                            setUserOnlineStatus(user.getUid(), true);\r\n                            storeUserData(user.getUid(), guestUsername, true);  // Store user data with isGuest as true\r\n                            sharedPreferences.edit().putString(\"UID\", currentUID).apply();\r\n                            updateUsernameUI();  // Update the UI with the username\r\n                        }\r\n                    } else {\r\n                        Log.w(TAG, \"signInAnonymously:failure\", task.getException());\r\n                        Toast.makeText(MainActivity.this, \"Authentication failed.\", Toast.LENGTH_SHORT).show();\r\n                    }\r\n                });\r\n    }\r\n\r\n    private void updateUsernameUI() {\r\n        DatabaseReference usernameRef = firebaseDatabase.getReference(\"users\")\r\n                .child(currentUID)\r\n                .child(\"username\");\r\n        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(DataSnapshot dataSnapshot) {\r\n                // Get the username as a String\r\n                String username = dataSnapshot.getValue(String.class);\r\n                if (username != null) {\r\n                    // Set the button text to the username\r\n                    btnLogin.setText(username);\r\n                } else {\r\n                    // Handle the case where username is not available\r\n                    btnLogin.setText(\"User\");\r\n                }\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n                // Handle potential errors here\r\n                Log.w(\"TAG\", \"Failed to read username.\");\r\n            }\r\n        });\r\n    }\r\n\r\n    private void checkIfGuestAndShowLoginDialog() {\r\n        DatabaseReference userRef = firebaseDatabase.getReference(\"users\").child(currentUID);\r\n        userRef.child(\"isGuest\").addListenerForSingleValueEvent(new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                Boolean isGuest = snapshot.getValue(Boolean.class);\r\n                if (isGuest != null && isGuest) {\r\n                    showGuestLoginDialog();\r\n                } else {\r\n                    showUserOptionsDialog();\r\n                }\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n                Log.e(TAG, \"Failed to check if user is guest: \" + error.getMessage());\r\n            }\r\n        });\r\n    }\r\n\r\n    private void showUserOptionsDialog() {\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        LayoutInflater inflater = getLayoutInflater();\r\n        View optionsView = inflater.inflate(R.layout.dialog_user_options, null);\r\n        builder.setView(optionsView);\r\n\r\n        EditText usernameEditText = optionsView.findViewById(R.id.username);\r\n        Button btnSaveUsername = optionsView.findViewById(R.id.btnSaveUsername);\r\n        Button btnSignOut = optionsView.findViewById(R.id.btnSignOut);\r\n\r\n        // Pre-fill the EditText with the current username\r\n        DatabaseReference usernameRef = firebaseDatabase.getReference(\"users\")\r\n                .child(currentUID)\r\n                .child(\"username\");\r\n        usernameRef.addListenerForSingleValueEvent(new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                String currentUsername = snapshot.getValue(String.class);\r\n                if (currentUsername != null) {\r\n                    usernameEditText.setText(currentUsername);\r\n                }\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n                Log.w(TAG, \"Failed to read current username.\", error.toException());\r\n            }\r\n        });\r\n\r\n        AlertDialog dialog = builder.create();\r\n\r\n        btnSaveUsername.setOnClickListener(v -> {\r\n            String newUsername = usernameEditText.getText().toString().trim();\r\n            if (!newUsername.isEmpty()) {\r\n                updateUsername(newUsername);\r\n                dialog.dismiss();\r\n            } else {\r\n                Toast.makeText(MainActivity.this, \"Username cannot be empty.\", Toast.LENGTH_SHORT).show();\r\n            }\r\n        });\r\n\r\n        btnSignOut.setOnClickListener(v -> {\r\n            dialog.dismiss();\r\n            showSignOutDialog();\r\n        });\r\n\r\n        dialog.show();\r\n    }\r\n\r\n    private void updateUsername(String newUsername) {\r\n        DatabaseReference usernameRef = firebaseDatabase.getReference(\"users\")\r\n                .child(currentUID)\r\n                .child(\"username\");\r\n\r\n        usernameRef.setValue(newUsername).addOnCompleteListener(task -> {\r\n            if (task.isSuccessful()) {\r\n                Toast.makeText(MainActivity.this, \"Username updated successfully\", Toast.LENGTH_SHORT).show();\r\n                updateUsernameUI();  // Update the UI with the new username\r\n            } else {\r\n                Toast.makeText(MainActivity.this, \"Failed to update username\", Toast.LENGTH_SHORT).show();\r\n            }\r\n        });\r\n    }\r\n\r\n    private void showGuestLoginDialog() {\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        builder.setTitle(\"Guest Account\")\r\n                .setMessage(\"You are currently using a guest account. Do you want to log in?\")\r\n                .setPositiveButton(\"Log in\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        showLoginDialog();\r\n                    }\r\n                })\r\n                .setNegativeButton(\"Cancel\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        dialog.dismiss();\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n\r\n        AlertDialog dialog = builder.create();\r\n        dialog.show();\r\n    }\r\n\r\n    private void showLoginDialog() {\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        LayoutInflater inflater = getLayoutInflater();\r\n        View loginView = inflater.inflate(R.layout.dialog_signin, null);\r\n        builder.setView(loginView)\r\n                .setPositiveButton(\"Login/Register\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        EditText emailEditText = loginView.findViewById(R.id.email);\r\n                        EditText passwordEditText = loginView.findViewById(R.id.password);\r\n                        String email = emailEditText.getText().toString().trim();\r\n                        String password = passwordEditText.getText().toString().trim();\r\n\r\n                        if (!isValidEmail(email)) {\r\n                            Toast.makeText(MainActivity.this, \"Please enter a valid email address\", Toast.LENGTH_SHORT).show();\r\n                        } else if (password.length() < 6) {\r\n                            Toast.makeText(MainActivity.this, \"Password must be at least 6 characters\", Toast.LENGTH_SHORT).show();\r\n                        } else {\r\n                            setGuestOffline();\r\n                            signInWithEmail(email, password);\r\n                        }\r\n                    }\r\n                })\r\n                .setNegativeButton(\"Cancel\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        dialog.cancel();\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n\r\n        AlertDialog dialog = builder.create();\r\n        dialog.show();\r\n    }\r\n\r\n    private void setGuestOffline() {\r\n        FirebaseUser user = mAuth.getCurrentUser();\r\n        if (user != null && user.isAnonymous()) {\r\n            DatabaseReference guestRef = firebaseDatabase.getReference(\"users\").child(user.getUid()).child(\"status\");\r\n            guestRef.setValue(\"offline\");\r\n        }\r\n    }\r\n\r\n    private void signInWithEmail(String email, String password) {\r\n        mAuth.signInWithEmailAndPassword(email, password)\r\n                .addOnCompleteListener(this, task -> {\r\n                    if (task.isSuccessful()) {\r\n                        FirebaseUser user = mAuth.getCurrentUser();\r\n                        if (user != null) {\r\n                            currentUID = user.getUid();\r\n                            setUserOnlineStatus(user.getUid(), true);\r\n                            updateUsernameUI();\r\n                            sharedPreferences.edit().putString(\"UID\", currentUID).apply();\r\n                            Toast.makeText(MainActivity.this, \"Successful login\", Toast.LENGTH_SHORT).show();\r\n                        }\r\n                    } else {\r\n                        if (task.getException() instanceof FirebaseAuthInvalidUserException || task.getException() instanceof FirebaseAuthInvalidCredentialsException) {\r\n                            // If sign-in fails, attempt to register the user\r\n                            registerWithEmail(email, password);\r\n                        } else {\r\n                            Log.w(TAG, \"signInWithEmail:failure\", task.getException());\r\n                            Toast.makeText(MainActivity.this, \"Authentication failed.\", Toast.LENGTH_SHORT).show();\r\n                        }\r\n                    }\r\n                });\r\n    }\r\n\r\n    private void registerWithEmail(String email, String password) {\r\n        mAuth.createUserWithEmailAndPassword(email, password)\r\n                .addOnCompleteListener(this, task -> {\r\n                    if (task.isSuccessful()) {\r\n                        FirebaseUser user = mAuth.getCurrentUser();\r\n                        if (user != null) {\r\n                            currentUID = user.getUid();\r\n                            String defaultUsername = \"User\" + new Random().nextInt(1000);\r\n                            setUserOnlineStatus(user.getUid(), true);\r\n                            storeUserData(user.getUid(), defaultUsername, false); // Store the user data with isGuest as false\r\n                            sharedPreferences.edit().putString(\"UID\", currentUID).apply();\r\n                            updateUsernameUI(); // Update the UI with the username\r\n                            Toast.makeText(MainActivity.this, \"Successful registration\", Toast.LENGTH_SHORT).show();\r\n                        }\r\n                    } else {\r\n                        if (task.getException() instanceof FirebaseAuthUserCollisionException) {\r\n                            // If registration fails due to an existing user\r\n                            Toast.makeText(MainActivity.this, \"Wrong password. Please try again.\", Toast.LENGTH_SHORT).show();\r\n                        } else {\r\n                            Log.w(TAG, \"registerWithEmail:failure\", task.getException());\r\n                            Toast.makeText(MainActivity.this, \"Registration failed.\", Toast.LENGTH_SHORT).show();\r\n                        }\r\n                    }\r\n                });\r\n    }\r\n\r\n    private void storeUserData(String uid, String username, boolean isGuest) {\r\n        DatabaseReference userRef = firebaseDatabase.getReference(\"users\").child(uid);\r\n        userRef.child(\"username\").setValue(username);\r\n        userRef.child(\"isGuest\").setValue(isGuest);\r\n        userRef.child(\"status\").setValue(\"online\");\r\n    }\r\n\r\n    private void setUserOnlineStatus(String userId, boolean isOnline) {\r\n        userStatusRef = firebaseDatabase.getReference(\"users\").child(userId).child(\"status\");\r\n        if (isOnline) {\r\n            userStatusRef.setValue(\"online\");\r\n            userStatusRef.onDisconnect().setValue(\"offline\");\r\n        } else {\r\n            userStatusRef.setValue(\"offline\");\r\n            Log.d(TAG, \"User status set to offline for UID: \" + userId);\r\n        }\r\n    }\r\n\r\n    private void showSignOutDialog() {\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        builder.setTitle(\"Sign Out\")\r\n                .setMessage(\"Are you sure you want to sign out?\")\r\n                .setPositiveButton(\"Sign out\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        Log.d(TAG, \"Sign out dialog confirmed\");\r\n                        signOut();\r\n                    }\r\n                })\r\n                .setNegativeButton(\"Cancel\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        dialog.dismiss(); // Dismiss the dialog\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n\r\n        AlertDialog dialog = builder.create();\r\n        dialog.show();\r\n    }\r\n\r\n    private void signOut() {\r\n        FirebaseUser user = mAuth.getCurrentUser();\r\n        if (currentUID != null) {\r\n            if (user != null) {\r\n                mAuth.signOut();\r\n            }\r\n            setUserOnlineStatus(currentUID, false);\r\n            currentUID = null;\r\n            sharedPreferences.edit().remove(\"UID\").apply();\r\n            Log.d(TAG, \"User signed out successfully\");\r\n            Toast.makeText(MainActivity.this, \"Signed out successfully\", Toast.LENGTH_SHORT).show();\r\n            // Automatically sign in as a guest after signing out\r\n            signInAnonymously();\r\n        } else {\r\n            Log.d(TAG, \"No user to sign out\");\r\n        }\r\n        Log.d(TAG, \"currentUID after sign out: \" + currentUID);\r\n        Log.d(TAG, \"SharedPreferences UID after sign out: \" + sharedPreferences.getString(\"UID\", \"null\"));\r\n    }\r\n\r\n\r\n\r\n    //create room stuff\r\n    private void createRoom() {\r\n        String roomCode = generateRoomCode();  // Method to generate a random room code\r\n\r\n        // check if the newly created room code exist;\r\n        firebaseDatabase.getReference(PRIVATE_ROOM).addListenerForSingleValueEvent(new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                // If the server is full\r\n                if (snapshot.getChildrenCount() == maxRoomCount) {\r\n                    Toast.makeText(getApplicationContext(), \"Game server is full, try later\", Toast.LENGTH_LONG).show();\r\n                }\r\n\r\n                // if the room code is unique\r\n                if (!snapshot.hasChild(roomCode)) {\r\n                    // do the create room and show dialog stuff\r\n                    roomRef = firebaseDatabase.getReference(PRIVATE_ROOM).child(roomCode);\r\n                    roomRef.child(\"player1\").setValue(currentUID);  // Save the current user's UID as player1\r\n                    roomRef.child(\"gameState\").setValue(\"waiting\"); // Set room state as waiting\r\n\r\n                    // Show the room code to the user to share with a friend\r\n                    showRoomCode(roomCode);\r\n\r\n                    // listener to detect player 2 join\r\n                    player2Join = new ValueEventListener() {\r\n                        @Override\r\n                        public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                            if (snapshot.exists()) {\r\n                                // Check if player2 has joined\r\n                                String player2UID = snapshot.child(\"player2\").getValue(String.class);\r\n                                if (player2UID != null && !player2UID.isEmpty()) {\r\n                                    Toast.makeText(getApplicationContext(), \"Player 2 joined, game should start\", Toast.LENGTH_SHORT).show();\r\n                                    if (roomDialog.isShowing() || roomDialog != null) {\r\n                                        roomDialog.dismiss();\r\n                                        roomDialog = null;\r\n                                    }\r\n                                    startGame(roomCode, PRIVATE_ROOM);\r\n                                }\r\n                            }\r\n                        }\r\n\r\n                        @Override\r\n                        public void onCancelled(@NonNull DatabaseError error) {\r\n                            Log.w(TAG, \"listenForPlayer2Join:onCancelled\", error.toException());\r\n                        }\r\n                    };\r\n                    roomRef.addValueEventListener(player2Join);\r\n                } else {\r\n                    // else keep create other number\r\n                    Toast.makeText(getApplicationContext(), \"Please try again.\", Toast.LENGTH_SHORT).show();\r\n                    //createRoom();\r\n                }\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n\r\n            }\r\n        });\r\n    }\r\n\r\n    private void createRoomOnline() {\r\n        String roomCode = generateRoomCode();  // Method to generate a random room code\r\n\r\n        // check if the newly created room code exist;\r\n        firebaseDatabase.getReference(PUBLIC_ROOM).addListenerForSingleValueEvent(new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                // If the server is full\r\n                if (snapshot.getChildrenCount() == maxRoomCount) {\r\n                    Toast.makeText(getApplicationContext(), \"Game server is full, try later\", Toast.LENGTH_LONG).show();\r\n                }\r\n\r\n                // if the room code is unique\r\n                if (!snapshot.hasChild(roomCode)) {\r\n                    // do the create room and show dialog stuff\r\n                    roomRef = firebaseDatabase.getReference(PUBLIC_ROOM).child(roomCode);\r\n                    roomRef.child(\"player1\").setValue(currentUID);  // Save the current user's UID as player1\r\n                    roomRef.child(\"gameState\").setValue(\"waiting\"); // Set room state as waiting\r\n\r\n                    // If no empty room then user auto-creates a room\r\n                    showRoomOnline();\r\n\r\n                    // listener to detect player 2 join\r\n                    player2Join = new ValueEventListener() {\r\n                        @Override\r\n                        public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                            if (snapshot.exists()) {\r\n                                // Check if player2 has joined\r\n                                String player2UID = snapshot.child(\"player2\").getValue(String.class);\r\n                                if (player2UID != null && !player2UID.isEmpty()) {\r\n                                    Toast.makeText(getApplicationContext(), \"Player 2 joined, game should start\", Toast.LENGTH_SHORT).show();\r\n                                    if (roomDialog.isShowing() || roomDialog != null) {\r\n                                        roomDialog.dismiss();\r\n                                        roomDialog = null;\r\n                                    }\r\n                                    startGame(roomCode, PUBLIC_ROOM);\r\n                                }\r\n                            }\r\n                        }\r\n\r\n                        @Override\r\n                        public void onCancelled(@NonNull DatabaseError error) {\r\n                            Log.w(TAG, \"listenForPlayer2Join:onCancelled\", error.toException());\r\n                        }\r\n                    };\r\n                    roomRef.addValueEventListener(player2Join);\r\n                } else {\r\n                    // else keep create other number\r\n                    Toast.makeText(getApplicationContext(), \"Please try again.\", Toast.LENGTH_SHORT).show();\r\n                    //createRoom();\r\n                }\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n\r\n            }\r\n        });\r\n    }\r\n\r\n    private String generateRoomCode() {\r\n        // Get the current time in seconds\r\n        long currentTimeSeconds = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);\r\n\r\n        // Use the current time in seconds as a seed to generate a random number\r\n        Random random = new Random(currentTimeSeconds);\r\n        return String.valueOf((int) (random.nextInt(9000) + 1000));  // Generate a four-digit random number\r\n    }\r\n\r\n    private void showRoomCode(String roomCode) {\r\n        // Display room code in a dialog or on the screen\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        builder.setTitle(\"Room Created\")\r\n                .setMessage(\"Share this code with your friend: \" + roomCode)\r\n                .setPositiveButton(\"Quit\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        destroyRoom();\r\n                        dialog.cancel();\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n\r\n        roomDialog = builder.create();\r\n\r\n        roomDialog.show();\r\n    }\r\n\r\n    private void showRoomOnline(){\r\n        LayoutInflater inflater = getLayoutInflater();\r\n        View dialogView = inflater.inflate(R.layout.dialog_searching, null);\r\n\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        builder.setView(dialogView)  // Set the custom layout as the dialog view\r\n                .setPositiveButton(\"Quit\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        destroyRoom();\r\n                        dialog.cancel();\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n\r\n        roomDialog = builder.create();\r\n\r\n        roomDialog.show();\r\n    }\r\n\r\n    // Destroy room when player1 quit from create room\r\n    private void destroyRoom() {\r\n        if (player2Join != null) {\r\n            roomRef.removeEventListener(player2Join);\r\n        }\r\n\r\n        if (roomRef != null) {\r\n            roomRef.removeValue();\r\n            roomRef = null;\r\n        }\r\n    }\r\n\r\n    //join room\r\n    private void showJoinRoomDialog() {\r\n        AlertDialog.Builder builder = new AlertDialog.Builder(this);\r\n        LayoutInflater inflater = getLayoutInflater();\r\n        View dialogView = inflater.inflate(R.layout.dialog_joinroom, null);\r\n        builder.setView(dialogView)\r\n                .setTitle(\"Join Room\")\r\n                .setPositiveButton(\"Join\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        EditText editTextRoomCode = dialogView.findViewById(R.id.editTextRoomCode);\r\n                        String roomCode = editTextRoomCode.getText().toString().trim();\r\n                        if (!roomCode.isEmpty()) {\r\n                            joinRoom(roomCode);\r\n                        } else {\r\n                            Toast.makeText(MainActivity.this, \"Please enter a room code\", Toast.LENGTH_SHORT).show();\r\n                        }\r\n                    }\r\n                })\r\n                .setNegativeButton(\"Cancel\", new DialogInterface.OnClickListener() {\r\n                    @Override\r\n                    public void onClick(DialogInterface dialog, int which) {\r\n                        dialog.dismiss();\r\n                    }\r\n                })\r\n                .setCancelable(false);\r\n\r\n        AlertDialog dialog = builder.create();\r\n        dialog.show();\r\n    }\r\n\r\n    private void joinRoom(String roomCode) {\r\n        // use a listener to check if roomcode exist or not\r\n        firebaseDatabase.getReference(PRIVATE_ROOM).addListenerForSingleValueEvent(new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                // only join room if room exist\r\n                if (snapshot.hasChild(roomCode)) {\r\n                    roomRef = firebaseDatabase.getReference(PRIVATE_ROOM).child(roomCode);\r\n\r\n                    // Check if both players are present to start the game\r\n                    roomRef.addListenerForSingleValueEvent(new ValueEventListener() {\r\n                        @Override\r\n                        public void onDataChange(DataSnapshot dataSnapshot) {\r\n                            if (dataSnapshot.child(\"player1\").exists() && dataSnapshot.child(\"gameState\").getValue().equals(\"waiting\") ) {\r\n                                roomRef.child(\"player2\").setValue(currentUID);  // Save the current user's UID as player2\r\n                                Toast.makeText(getApplicationContext(), \"join success, should start game\", Toast.LENGTH_SHORT).show();\r\n                                startGame(roomCode, PRIVATE_ROOM);\r\n                            } else {\r\n                                Toast.makeText(getApplicationContext(), \"Room is full\", Toast.LENGTH_SHORT).show();\r\n                            }\r\n                        }\r\n\r\n                        @Override\r\n                        public void onCancelled(@NonNull DatabaseError databaseError) {\r\n                            Log.w(TAG, \"joinRoom:onCancelled\", databaseError.toException());\r\n                        }\r\n                    });\r\n                } else {\r\n                    //else shoe room not found\r\n                    Toast.makeText(getApplicationContext(), \"Room not found\", Toast.LENGTH_SHORT).show();\r\n                }\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n\r\n            }\r\n        });\r\n    }\r\n\r\n    private void joinRoomOnline(String roomCode){\r\n        firebaseDatabase.getReference(PUBLIC_ROOM).addListenerForSingleValueEvent(new ValueEventListener() {\r\n            @Override\r\n            public void onDataChange(@NonNull DataSnapshot snapshot) {\r\n                // only join room if room exist\r\n                if (snapshot.hasChild(roomCode)) {\r\n                    roomRef = firebaseDatabase.getReference(PUBLIC_ROOM).child(roomCode);\r\n\r\n                    // Check if both players are present to start the game\r\n                    roomRef.addListenerForSingleValueEvent(new ValueEventListener() {\r\n                        @Override\r\n                        public void onDataChange(DataSnapshot dataSnapshot) {\r\n                            if (dataSnapshot.child(\"player1\").exists() && dataSnapshot.child(\"gameState\").getValue().equals(\"waiting\") ) {\r\n                                roomRef.child(\"player2\").setValue(currentUID);  // Save the current user's UID as player2\r\n                                Toast.makeText(getApplicationContext(), \"join success, should start game\", Toast.LENGTH_SHORT).show();\r\n                                startGame(roomCode, PUBLIC_ROOM);\r\n                            } else {\r\n                                Toast.makeText(getApplicationContext(), \"Room is full\", Toast.LENGTH_SHORT).show();\r\n                            }\r\n                        }\r\n\r\n                        @Override\r\n                        public void onCancelled(@NonNull DatabaseError databaseError) {\r\n                            Log.w(TAG, \"joinRoom:onCancelled\", databaseError.toException());\r\n                        }\r\n                    });\r\n                } else {\r\n                    //else shoe room not found\r\n                    Toast.makeText(getApplicationContext(), \"Room not found\", Toast.LENGTH_SHORT).show();\r\n                }\r\n            }\r\n\r\n            @Override\r\n            public void onCancelled(@NonNull DatabaseError error) {\r\n\r\n            }\r\n        });\r\n    }\r\n\r\n    private void startGame(String roomCode, String roomType) {\r\n        BGMPlayer.getInstance(this).stop();\r\n        roomRef.child(\"gameState\").setValue(\"active\"); // Set room state as active\r\n\r\n        // Remove listener for player 2 join\r\n        if (player2Join != null){\r\n            roomRef.removeEventListener(player2Join);\r\n        }\r\n\r\n        // start deploy activity\r\n        Intent intent = new Intent(MainActivity.this, DeployActivity.class);\r\n        intent.putExtra(\"roomCode\",roomCode); // Pass the room code into new activity\r\n        intent.putExtra(\"roomType\", roomType); // Pass the room type (public/private) into new activity\r\n        startActivity(intent);\r\n    }\r\n    private boolean isValidEmail(String email) {\r\n        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();\r\n    }\r\n\r\n\r\n\r\n    @Override\r\n    protected void onPause() {\r\n        super.onPause();\r\n        BGMPlayer.getInstance(this).pause();\r\n    }\r\n\r\n    @Override\r\n    protected void onResume() {\r\n        super.onResume();\r\n        BGMPlayer.getInstance(this).start();\r\n    }\r\n\r\n    @Override\r\n    protected void onDestroy() {\r\n        super.onDestroy();\r\n        BGMPlayer.getInstance(this).stop();\r\n    }\r\n\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/edu/northeastern/finalprojectgroup11/MainActivity.java b/app/src/main/java/edu/northeastern/finalprojectgroup11/MainActivity.java
+--- a/app/src/main/java/edu/northeastern/finalprojectgroup11/MainActivity.java	(revision b9d05676e7e03c05f08099dc94e03e1bf0b79d36)
++++ b/app/src/main/java/edu/northeastern/finalprojectgroup11/MainActivity.java	(date 1723280593192)
+@@ -210,7 +210,7 @@
+         settingsDialog.setContentView(R.layout.dialog_settings);
+         settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+ 
+-        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_volume);
++        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_value);
+         seekBarVolume.setProgress(bgmVolume);
+ 
+         seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+@@ -227,7 +227,7 @@
+             public void onStopTrackingTouch(SeekBar seekBar) {}
+         });
+ 
+-        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_how_to_play);
++        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_howToPlay);
+         btnHowToPlay.setOnClickListener(v -> {
+             // Handle "How to Play" button click here
+ //            showHowToPlayDialog();
+Index: app/src/main/res/layout/dialog_settings.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><LinearLayout\r\n    xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    android:layout_width=\"match_parent\"\r\n    android:layout_height=\"wrap_content\"\r\n    android:orientation=\"vertical\"\r\n    android:padding=\"20dp\">\r\n\r\n    <TextView\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\"\r\n        android:text=\"BGM Volume\"\r\n        android:textSize=\"18sp\"/>\r\n\r\n    <SeekBar\r\n        android:id=\"@+id/seekBar_volume\"\r\n        android:layout_width=\"match_parent\"\r\n        android:layout_height=\"wrap_content\"\r\n        android:max=\"100\"/>\r\n\r\n    <Button\r\n        android:id=\"@+id/btn_how_to_play\"\r\n        android:layout_width=\"match_parent\"\r\n        android:layout_height=\"wrap_content\"\r\n        android:text=\"How to Play\" />\r\n</LinearLayout>\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/dialog_settings.xml b/app/src/main/res/layout/dialog_settings.xml
+--- a/app/src/main/res/layout/dialog_settings.xml	(revision b9d05676e7e03c05f08099dc94e03e1bf0b79d36)
++++ b/app/src/main/res/layout/dialog_settings.xml	(date 1723280566050)
+@@ -12,13 +12,13 @@
+         android:textSize="18sp"/>
+ 
+     <SeekBar
+-        android:id="@+id/seekBar_volume"
++        android:id="@+id/seekBar_value"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:max="100"/>
+ 
+     <Button
+-        android:id="@+id/btn_how_to_play"
++        android:id="@+id/btn_howToPlay"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:text="How to Play" />
+Index: app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package edu.northeastern.finalprojectgroup11.Music;\r\n\r\nimport android.content.Context;\r\nimport android.media.MediaPlayer;\r\n\r\nimport edu.northeastern.finalprojectgroup11.R;\r\n\r\npublic class BGMPlayer {\r\n    private static BGMPlayer instance;\r\n    private MediaPlayer mediaPlayer;\r\n    private int currentPosition = 0;\r\n\r\n    private BGMPlayer(Context context) {\r\n        mediaPlayer = MediaPlayer.create(context, R.raw.music_main); // Replace with your BGM file\r\n        mediaPlayer.setLooping(true);\r\n    }\r\n\r\n    public static BGMPlayer getInstance(Context context) {\r\n        if (instance == null) {\r\n            instance = new BGMPlayer(context);\r\n        }\r\n        return instance;\r\n    }\r\n\r\n    public void start() {\r\n        if (!mediaPlayer.isPlaying()) {\r\n            mediaPlayer.start();\r\n            mediaPlayer.seekTo(currentPosition); // Resume from the last position\r\n        }\r\n    }\r\n\r\n    public void pause() {\r\n        if (mediaPlayer.isPlaying()) {\r\n            mediaPlayer.pause();\r\n            currentPosition = mediaPlayer.getCurrentPosition(); // Save the current position\r\n        }\r\n    }\r\n\r\n    public void stop() {\r\n        if (mediaPlayer.isPlaying()) {\r\n            mediaPlayer.stop();\r\n            mediaPlayer.release();\r\n            instance = null; // Reset the instance\r\n        }\r\n    }\r\n\r\n    public void setVolume(float volume) {\r\n        mediaPlayer.setVolume(volume, volume);\r\n    }\r\n}\r\n\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer.java b/app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer.java
+--- a/app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer.java	(revision b9d05676e7e03c05f08099dc94e03e1bf0b79d36)
++++ b/app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer.java	(date 1723279562648)
+@@ -11,7 +11,7 @@
+     private int currentPosition = 0;
+ 
+     private BGMPlayer(Context context) {
+-        mediaPlayer = MediaPlayer.create(context, R.raw.music_main); // Replace with your BGM file
++        mediaPlayer = MediaPlayer.create(context, R.raw.music_main);
+         mediaPlayer.setLooping(true);
+     }
+ 
+Index: app/src/main/res/values/ids.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/values/ids.xml b/app/src/main/res/values/ids.xml
+new file mode 100644
+--- /dev/null	(date 1723279361254)
++++ b/app/src/main/res/values/ids.xml	(date 1723279361254)
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <item name="seekBar_volume" type="id">seekBar_volume</item>
++    <item name="btn_how_to_play" type="id">btn_how_to_play</item>
++</resources>
+\ No newline at end of file
+Index: app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer2.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer2.java b/app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer2.java
+new file mode 100644
+--- /dev/null	(date 1723279562642)
++++ b/app/src/main/java/edu/northeastern/finalprojectgroup11/Music/BGMPlayer2.java	(date 1723279562642)
+@@ -0,0 +1,51 @@
++package edu.northeastern.finalprojectgroup11.Music;
++
++import android.content.Context;
++import android.media.MediaPlayer;
++
++import edu.northeastern.finalprojectgroup11.R;
++
++public class BGMPlayer2 {
++    private static BGMPlayer2 instance;
++    private MediaPlayer mediaPlayer;
++    private int currentPosition = 0;
++
++    private BGMPlayer2(Context context) {
++        mediaPlayer = MediaPlayer.create(context, R.raw.music_deploy);
++        mediaPlayer.setLooping(true);
++    }
++
++    public static BGMPlayer2 getInstance(Context context) {
++        if (instance == null) {
++            instance = new BGMPlayer2(context);
++        }
++        return instance;
++    }
++
++    public void start() {
++        if (!mediaPlayer.isPlaying()) {
++            mediaPlayer.start();
++            mediaPlayer.seekTo(currentPosition); // Resume from the last position
++        }
++    }
++
++    public void pause() {
++        if (mediaPlayer.isPlaying()) {
++            mediaPlayer.pause();
++            currentPosition = mediaPlayer.getCurrentPosition(); // Save the current position
++        }
++    }
++
++    public void stop() {
++        if (mediaPlayer.isPlaying()) {
++            mediaPlayer.stop();
++            mediaPlayer.release();
++            instance = null; // Reset the instance
++        }
++    }
++
++    public void setVolume(float volume) {
++        mediaPlayer.setVolume(volume, volume);
++    }
++}
++
+Index: .idea/other.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/other.xml b/.idea/other.xml
+new file mode 100644
+--- /dev/null	(date 1723280033451)
++++ b/.idea/other.xml	(date 1723280033451)
+@@ -0,0 +1,252 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="direct_access_persist.xml">
++    <option name="deviceSelectionList">
++      <list>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="27" />
++          <option name="brand" value="DOCOMO" />
++          <option name="codename" value="F01L" />
++          <option name="id" value="F01L" />
++          <option name="manufacturer" value="FUJITSU" />
++          <option name="name" value="F-01L" />
++          <option name="screenDensity" value="360" />
++          <option name="screenX" value="720" />
++          <option name="screenY" value="1280" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="28" />
++          <option name="brand" value="DOCOMO" />
++          <option name="codename" value="SH-01L" />
++          <option name="id" value="SH-01L" />
++          <option name="manufacturer" value="SHARP" />
++          <option name="name" value="AQUOS sense2 SH-01L" />
++          <option name="screenDensity" value="480" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2160" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="31" />
++          <option name="brand" value="samsung" />
++          <option name="codename" value="a51" />
++          <option name="id" value="a51" />
++          <option name="manufacturer" value="Samsung" />
++          <option name="name" value="Galaxy A51" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2400" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="34" />
++          <option name="brand" value="google" />
++          <option name="codename" value="akita" />
++          <option name="id" value="akita" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel 8a" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2400" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="33" />
++          <option name="brand" value="samsung" />
++          <option name="codename" value="b0q" />
++          <option name="id" value="b0q" />
++          <option name="manufacturer" value="Samsung" />
++          <option name="name" value="Galaxy S22 Ultra" />
++          <option name="screenDensity" value="600" />
++          <option name="screenX" value="1440" />
++          <option name="screenY" value="3088" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="32" />
++          <option name="brand" value="google" />
++          <option name="codename" value="bluejay" />
++          <option name="id" value="bluejay" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel 6a" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2400" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="29" />
++          <option name="brand" value="samsung" />
++          <option name="codename" value="crownqlteue" />
++          <option name="id" value="crownqlteue" />
++          <option name="manufacturer" value="Samsung" />
++          <option name="name" value="Galaxy Note9" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="2220" />
++          <option name="screenY" value="1080" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="34" />
++          <option name="brand" value="samsung" />
++          <option name="codename" value="dm3q" />
++          <option name="id" value="dm3q" />
++          <option name="manufacturer" value="Samsung" />
++          <option name="name" value="Galaxy S23 Ultra" />
++          <option name="screenDensity" value="600" />
++          <option name="screenX" value="1440" />
++          <option name="screenY" value="3088" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="33" />
++          <option name="brand" value="google" />
++          <option name="codename" value="felix" />
++          <option name="id" value="felix" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel Fold" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="2208" />
++          <option name="screenY" value="1840" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="33" />
++          <option name="brand" value="google" />
++          <option name="codename" value="felix_camera" />
++          <option name="id" value="felix_camera" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel Fold (Camera-enabled)" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="2208" />
++          <option name="screenY" value="1840" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="33" />
++          <option name="brand" value="samsung" />
++          <option name="codename" value="gts8uwifi" />
++          <option name="id" value="gts8uwifi" />
++          <option name="manufacturer" value="Samsung" />
++          <option name="name" value="Galaxy Tab S8 Ultra" />
++          <option name="screenDensity" value="320" />
++          <option name="screenX" value="1848" />
++          <option name="screenY" value="2960" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="34" />
++          <option name="brand" value="google" />
++          <option name="codename" value="husky" />
++          <option name="id" value="husky" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel 8 Pro" />
++          <option name="screenDensity" value="390" />
++          <option name="screenX" value="1008" />
++          <option name="screenY" value="2244" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="30" />
++          <option name="brand" value="motorola" />
++          <option name="codename" value="java" />
++          <option name="id" value="java" />
++          <option name="manufacturer" value="Motorola" />
++          <option name="name" value="G20" />
++          <option name="screenDensity" value="280" />
++          <option name="screenX" value="720" />
++          <option name="screenY" value="1600" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="33" />
++          <option name="brand" value="google" />
++          <option name="codename" value="lynx" />
++          <option name="id" value="lynx" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel 7a" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2400" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="31" />
++          <option name="brand" value="google" />
++          <option name="codename" value="oriole" />
++          <option name="id" value="oriole" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel 6" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2400" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="33" />
++          <option name="brand" value="google" />
++          <option name="codename" value="panther" />
++          <option name="id" value="panther" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel 7" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2400" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="34" />
++          <option name="brand" value="samsung" />
++          <option name="codename" value="q5q" />
++          <option name="id" value="q5q" />
++          <option name="manufacturer" value="Samsung" />
++          <option name="name" value="Galaxy Z Fold5" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="1812" />
++          <option name="screenY" value="2176" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="30" />
++          <option name="brand" value="google" />
++          <option name="codename" value="r11" />
++          <option name="id" value="r11" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel Watch" />
++          <option name="screenDensity" value="320" />
++          <option name="screenX" value="384" />
++          <option name="screenY" value="384" />
++          <option name="type" value="WEAR_OS" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="30" />
++          <option name="brand" value="google" />
++          <option name="codename" value="redfin" />
++          <option name="id" value="redfin" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel 5" />
++          <option name="screenDensity" value="440" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2340" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="34" />
++          <option name="brand" value="google" />
++          <option name="codename" value="shiba" />
++          <option name="id" value="shiba" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel 8" />
++          <option name="screenDensity" value="420" />
++          <option name="screenX" value="1080" />
++          <option name="screenY" value="2400" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="33" />
++          <option name="brand" value="google" />
++          <option name="codename" value="tangorpro" />
++          <option name="id" value="tangorpro" />
++          <option name="manufacturer" value="Google" />
++          <option name="name" value="Pixel Tablet" />
++          <option name="screenDensity" value="320" />
++          <option name="screenX" value="1600" />
++          <option name="screenY" value="2560" />
++        </PersistentDeviceSelectionData>
++        <PersistentDeviceSelectionData>
++          <option name="api" value="29" />
++          <option name="brand" value="samsung" />
++          <option name="codename" value="x1q" />
++          <option name="id" value="x1q" />
++          <option name="manufacturer" value="Samsung" />
++          <option name="name" value="Galaxy S20" />
++          <option name="screenDensity" value="480" />
++          <option name="screenX" value="1440" />
++          <option name="screenY" value="3200" />
++        </PersistentDeviceSelectionData>
++      </list>
++    </option>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/deploymentTargetSelector.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"deploymentTargetSelector\">\r\n    <selectionStates>\r\n      <SelectionState runConfigName=\"app\">\r\n        <option name=\"selectionMode\" value=\"DROPDOWN\" />\r\n        <DropdownSelection timestamp=\"2024-08-10T07:08:55.965346Z\">\r\n          <Target type=\"DEFAULT_BOOT\">\r\n            <handle>\r\n              <DeviceId pluginId=\"LocalEmulator\" identifier=\"path=C:\\Users\\user\\.android\\avd\\22.avd\" />\r\n            </handle>\r\n          </Target>\r\n        </DropdownSelection>\r\n        <DialogSelection />\r\n      </SelectionState>\r\n    </selectionStates>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/deploymentTargetSelector.xml b/.idea/deploymentTargetSelector.xml
+--- a/.idea/deploymentTargetSelector.xml	(revision b9d05676e7e03c05f08099dc94e03e1bf0b79d36)
++++ b/.idea/deploymentTargetSelector.xml	(date 1723279243142)
+@@ -4,10 +4,10 @@
+     <selectionStates>
+       <SelectionState runConfigName="app">
+         <option name="selectionMode" value="DROPDOWN" />
+-        <DropdownSelection timestamp="2024-08-10T07:08:55.965346Z">
++        <DropdownSelection timestamp="2024-08-10T08:31:36.010950400Z">
+           <Target type="DEFAULT_BOOT">
+             <handle>
+-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\user\.android\avd\22.avd" />
++              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Superuser\.android\avd\Pixel_3_API_35.avd" />
+             </handle>
+           </Target>
+         </DropdownSelection>
