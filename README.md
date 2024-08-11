@@ -16,6 +16,9 @@
 - Yi-hsuan Lai (GitHub: [DannyLLL](https://github.com/DannyLLL))
 - Qichen Wang (GitHub: [ZAcoooo](https://github.com/ZAcoooo))
 
+## Video Tour
+- https://www.youtube.com/watch?v=-Nfgi6CfRTE
+
 ### Repository:
 [https://github.com/CS5520Summer2024Feinberg/final-project-finalproject-group11](https://github.com/CS5520Summer2024Feinberg/final-project-finalproject-group11)
 
