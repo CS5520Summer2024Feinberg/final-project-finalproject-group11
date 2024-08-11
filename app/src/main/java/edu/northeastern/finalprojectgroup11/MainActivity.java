@@ -90,29 +90,30 @@ public class MainActivity extends AppCompatActivity {
 //            mp.setVolume(0, 0);
 //        });
 
-        // Apply the volume to the BGMPlayer
-        BGMPlayer.getInstance(this).setVolume(bgmVolume);
-        BGMPlayer.getInstance(this).start();
-
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        Button btnBot = findViewById(R.id.test_btn);
-        btnBot.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, BotDeployActivity.class);
-                startActivity(intent);
-            }
-        });
-
-
         sharedPreferences = getSharedPreferences("Battleship", MODE_PRIVATE);
+
+        boolean hasSeenTutorial = sharedPreferences.getBoolean("hasSeenTutorial", false);
+        if (!hasSeenTutorial) {
+            // First time launch, show the tutorial
+            Intent intent = new Intent(this, TutorialActivity.class);
+            startActivity(intent);
+            finish();
+        } else {
+            // Proceed with the regular main activity content
+            setContentView(R.layout.activity_main);
+        }
+
         currentUID = sharedPreferences.getString("UID", null);
+
+        // Apply the volume to the BGMPlayer
+        BGMPlayer.getInstance(this).setVolume(bgmVolume);
+        BGMPlayer.getInstance(this).start();
 
         // Initialize Firebase Auth and Database
         mAuth = FirebaseAuth.getInstance();
@@ -220,6 +221,16 @@ public class MainActivity extends AppCompatActivity {
                         Log.e("Firebase", "Error while searching for a room: " + databaseError.getMessage());
                     }
                 });
+            }
+        });
+
+        Button btnBot = findViewById(R.id.test_btn);
+        btnBot.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, BotDeployActivity.class);
+                startActivity(intent);
             }
         });
 
