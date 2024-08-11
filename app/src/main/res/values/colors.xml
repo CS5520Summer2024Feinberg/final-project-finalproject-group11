@@ -4,4 +4,12 @@
     <color name="white">#FFFFFFFF</color>
     <color name="dark_blue">#2980fb</color>
     <color name="light_blue">#97C0FB</color>
+    <color name="button_red">#D92424</color>
+    <color name="button_three">#CECECE</color>
+    <color name="play_background">#F2F2F2</color>
+    <color name="boarder_outline">#646464</color>
+
+
+
+
 </resources>

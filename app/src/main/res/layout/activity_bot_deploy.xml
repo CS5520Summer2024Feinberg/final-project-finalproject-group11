@@ -8,11 +8,26 @@
     android:background="#F5F5DC"
     tools:context=".BotDeployActivity">
 
+
+    <View
+        android:id="@+id/backgroundSquare"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/boarder_outline"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_bottom"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/guideline_top"
+        app:layout_constraintDimensionRatio="1:1"
+        android:layout_margin="0dp" />
+
+
     <androidx.gridlayout.widget.GridLayout
         android:id="@+id/gridLayoutMinePlacement"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:padding="0dp"
+        android:layout_margin="5dp"
         app:alignmentMode="alignBounds"
         app:columnCount="10"
         app:layout_constraintBottom_toBottomOf="@id/guideline_bottom"
@@ -25,12 +40,13 @@
         <!-- Dynamically add buttons for the grid cells in the activity -->
     </androidx.gridlayout.widget.GridLayout>
 
+
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_top"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.15" />
+        app:layout_constraintGuide_percent="0.12" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_bottom"
@@ -52,51 +68,65 @@
 
     <Button
         android:id="@+id/buttonReady"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="80dp"
+        android:layout_marginBottom="80dp"
+        android:backgroundTint="@color/button_red"
         android:text="Ready"
-        android:textColor="#FF000000"
-        android:backgroundTint="#4CAF50"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/guideline_bottom" />
+        android:textColor="#FFFFFF"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="@id/guidelineCenterH"
+        app:layout_constraintHorizontal_bias="0.64"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/guideline_bottom"
+        app:layout_constraintVertical_bias="0.0" />
 
-    <Button
-        android:id="@+id/buttonRandom"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Random"
-        android:textColor="#FF000000"
-        android:backgroundTint="#FFEB3B"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/buttonReady" />
 
+<!--    this control other two-->
     <Button
         android:id="@+id/buttonReset"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:background="@color/button_three"
+
         android:text="Reset"
-        android:textColor="#FF000000"
-        android:backgroundTint="#F36A6A"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/buttonRandom" />
+        android:textSize="15dp"
+        app:layout_constraintBottom_toBottomOf="@id/buttonReady"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@id/guidelineCenterH"
+        app:layout_constraintTop_toTopOf="@id/buttonReady" />
 
     <Button
         android:id="@+id/buttonQuit"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:background="@color/button_three"
+        android:layout_marginTop="15dp"
         android:text="Quit"
-        android:textColor="#FF000000"
-        android:backgroundTint="#D3D3D3"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/buttonReset" />
+        android:textSize="15dp"
+
+        app:layout_constraintStart_toStartOf="@id/buttonReset"
+        app:layout_constraintEnd_toEndOf="@id/buttonReset"
+        app:layout_constraintTop_toBottomOf="@+id/buttonReset" />
+
+    <Button
+        android:id="@+id/buttonRandom"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:text="Random"
+        android:textSize="15dp"
+
+        android:background="@color/button_three"
+        app:layout_constraintStart_toStartOf="@id/buttonReset"
+        app:layout_constraintEnd_toEndOf="@id/buttonReset"
+        app:layout_constraintBottom_toTopOf="@+id/buttonReset" />
+
 
     <TextView
         android:id="@+id/mineIcon"
@@ -105,31 +135,43 @@
         android:text="\u26AB"
         android:layout_marginRight="0dp"
         android:textSize="30sp"
-        android:textColor="#FF000000"
-    app:layout_constraintBottom_toTopOf="@id/guideline_top"
-    app:layout_constraintEnd_toStartOf="@id/mineLeftTextView" />
+        app:layout_constraintBottom_toBottomOf="@id/mineLeftTextView"
+        app:layout_constraintEnd_toStartOf="@id/mineLeftTextView" />
+
 
     <TextView
         android:id="@+id/mineLeftTextView"
         android:layout_width="40dp"
+        android:layout_marginBottom="10dp"
         android:layout_height="wrap_content"
         android:text="10"
+        android:gravity="center"
         android:textSize="30sp"
         android:layout_marginRight="30dp"
         android:textColor="#FF000000"
     app:layout_constraintBottom_toTopOf="@id/guideline_top"
     app:layout_constraintEnd_toStartOf="@+id/guidelineCenterH" />
 
+
+    <TextView
+        android:id="@+id/bigCountdownIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:text="⏱️"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toBottomOf="@id/mineLeftTextView"
+        app:layout_constraintStart_toEndOf="@+id/guidelineCenterH" />
+
     <TextView
         android:id="@+id/countdownTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="40dp"
+        android:layout_marginLeft="2dp"
         android:text="10"
         android:textSize="30sp"
-        android:textColor="#FF000000"
-    app:layout_constraintBottom_toTopOf="@id/guideline_top"
-    app:layout_constraintStart_toEndOf="@+id/guidelineCenterH" />
+        app:layout_constraintBottom_toBottomOf="@id/mineLeftTextView"
+        app:layout_constraintStart_toEndOf="@+id/bigCountdownIcon" />
 
 
     <androidx.constraintlayout.widget.Guideline

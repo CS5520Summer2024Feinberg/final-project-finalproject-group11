@@ -4,7 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp">
+    android:paddingTop="50dp"
+    android:paddingBottom="50dp"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp">
 
     <!-- Back Button to close the dialog -->
 
@@ -29,13 +32,15 @@
         android:id="@+id/button1"
         android:layout_width="130dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="12dp"
         android:background="?attr/colorAccent"
         android:text="Create\nRoom"
         android:textColor="@android:color/white"
-        android:textSize="15sp"
+        android:textSize="17sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/guidelineMid" />
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineMid"
+        app:layout_constraintStart_toStartOf="parent"/>
 <!--        app:layout_constraintTop_toBottomOf="@id/backButton"-->
 <!--        android:layout_marginTop="12dp" />-->
 
@@ -44,14 +49,16 @@
         android:id="@+id/button2"
         android:layout_width="130dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
+
         android:background="?attr/colorAccent"
         android:text="Join\nRoom"
         android:textColor="@android:color/white"
-        android:textSize="15sp"
+        android:textSize="17sp"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@+id/guidelineMid" />
+        app:layout_constraintStart_toStartOf="@+id/guidelineMid"
+        app:layout_constraintEnd_toEndOf="parent"/>
 <!--        app:layout_constraintTop_toBottomOf="@+id/backButton" />-->
 
     <androidx.constraintlayout.widget.Guideline
