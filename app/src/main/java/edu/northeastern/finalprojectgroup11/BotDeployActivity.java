@@ -1,7 +1,9 @@
 package edu.northeastern.finalprojectgroup11;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -10,6 +12,9 @@ import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +30,9 @@ import androidx.gridlayout.widget.GridLayout;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import edu.northeastern.finalprojectgroup11.Music.BGMPlayer;
+import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
 
 
 //  UI: timer and mine icon, ready change color when hit link quit with back
@@ -42,6 +50,10 @@ private TextView countdownTextView; // TextView to show the countdown
 
 private TextView mineLeftextView;
 
+private static final String PREFS_NAME = "BGMSettings";
+private static final String KEY_BGM_VOLUME = "bgmVolume";
+private int bgmVolume = 50; // Default volume (50% of max volume)
+
 
     @Override
     protected void onDestroy() {
@@ -57,6 +69,10 @@ private TextView mineLeftextView;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bot_deploy);
 
+        // Apply the volume to the BGMPlayer
+        BGMPlayer2.getInstance(this).setVolume(bgmVolume);
+        BGMPlayer2.getInstance(this).start();
+
         handler = new Handler(Looper.getMainLooper()); // for delay
 
         mineLeftextView = findViewById(R.id.mineLeftTextView);
@@ -66,6 +82,8 @@ private TextView mineLeftextView;
         Button btnReset = findViewById(R.id.buttonReset);
         Button btnQuit = findViewById(R.id.buttonQuit);
 
+        ImageButton btnSettings = findViewById(R.id.btn_settings);
+        btnSettings.setOnClickListener(v -> showSettingsDialog());
 
         // Initialize the countdown timer for 10 seconds
         countDownTimer = new CountDownTimer(20000, 1000) {
@@ -180,6 +198,45 @@ private TextView mineLeftextView;
         }
     }
 
+    private void showSettingsDialog() {
+        // Load saved volume level
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        bgmVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
+
+        Dialog settingsDialog = new Dialog(this);
+        settingsDialog.setContentView(R.layout.dialog_settings);
+        settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_value);
+        seekBarVolume.setProgress(bgmVolume);
+
+        seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float volume = progress / 100f; // Convert progress to a float between 0.0 and 1.0
+                BGMPlayer2.getInstance(BotDeployActivity.this).setVolume(volume);
+
+                // Save the volume level in SharedPreferences
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt(KEY_BGM_VOLUME, progress);
+                editor.apply();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_howToPlay);
+        btnHowToPlay.setOnClickListener(v -> {
+            // Handle "How to Play" button click here
+            // showHowToPlayDialog();
+        });
+
+        settingsDialog.show();
+    }
 
     // 1 mine is placed, -1 mine is removed
     public int onCellClick(int row, int col) {
@@ -301,6 +358,7 @@ private TextView mineLeftextView;
         Intent intent = new Intent(BotDeployActivity.this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
+        BGMPlayer2.getInstance(this).stop();
         finish();
     }
 

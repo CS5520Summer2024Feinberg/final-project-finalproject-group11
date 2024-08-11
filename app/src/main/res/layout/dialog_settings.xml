@@ -9,17 +9,22 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="BGM Volume"
+        android:textColor="@android:color/black"
         android:textSize="18sp"/>
 
     <SeekBar
-        android:id="@+id/seekBar_volume"
+        android:id="@+id/seekBar_value"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:max="100"/>
 
     <Button
-        android:id="@+id/btn_how_to_play"
+        android:id="@+id/btn_howToPlay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="How to Play" />
+        android:text="How to Play"
+        android:background="?attr/colorAccent"
+        android:textColor="@android:color/white"
+        android:textStyle="bold" />
+
 </LinearLayout>

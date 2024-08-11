@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
+import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
+
 public class DeployActivity extends AppCompatActivity {
     private String TAG = "DeployActivity";
     private FirebaseDatabase firebaseDatabase;
@@ -72,6 +74,9 @@ public class DeployActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+//        BGMPlayer2.getInstance(this).stop();
+
 
         // Remove event listener
         if (bothReady != null) {
@@ -108,6 +113,17 @@ public class DeployActivity extends AppCompatActivity {
         }, 5000); // 5000 milliseconds delay
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        BGMPlayer2.getInstance(this).pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+//        BGMPlayer2.getInstance(this).start();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,6 +147,10 @@ public class DeployActivity extends AppCompatActivity {
             }
         };
         getOnBackPressedDispatcher().addCallback(this, callback);
+
+//        BGMPlayer2.getInstance(this).start();
+
+
         // Retrieve room code
         Intent intent = getIntent();
         roomCode = intent.getStringExtra("roomCode");

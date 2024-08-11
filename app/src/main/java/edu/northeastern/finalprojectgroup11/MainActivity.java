@@ -6,11 +6,14 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -28,7 +31,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.bumptech.glide.Glide;
+//import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
@@ -42,11 +45,12 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
+//import java.util.ArrayList;
+//import java.util.List;
 import java.util.Random;
 
 import android.widget.LinearLayout;
+import android.widget.VideoView;
 
 import edu.northeastern.finalprojectgroup11.Music.BGMPlayer;
 
@@ -66,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String PUBLIC_ROOM = "PublicRooms";
     private static final String PRIVATE_ROOM = "PrivateRooms";
 
+    private static final String PREFS_NAME = "BGMSettings";
+    private static final String KEY_BGM_VOLUME = "bgmVolume";
     private int bgmVolume = 50; // Default volume (50% of max volume)
 
     @Override
@@ -74,7 +80,15 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        BGMPlayer.getInstance(this).start();
+        // Background video
+//        VideoView videoView = findViewById(R.id.videoView);
+//        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.background);
+//        videoView.setVideoURI(uri);
+//        videoView.start();
+//        videoView.setOnPreparedListener(mp -> {
+//            mp.setLooping(true);
+//            mp.setVolume(0, 0);
+//        });
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -82,19 +96,24 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        Button btnBot = findViewById(R.id.test_btn);
-        btnBot.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, BotDeployActivity.class);
-                startActivity(intent);
-            }
-        });
-
-
         sharedPreferences = getSharedPreferences("Battleship", MODE_PRIVATE);
+
+        boolean hasSeenTutorial = sharedPreferences.getBoolean("hasSeenTutorial", false);
+        if (!hasSeenTutorial) {
+            // First time launch, show the tutorial
+            Intent intent = new Intent(this, TutorialActivity.class);
+            startActivity(intent);
+            finish();
+        } else {
+            // Proceed with the regular main activity content
+            setContentView(R.layout.activity_main);
+        }
+
         currentUID = sharedPreferences.getString("UID", null);
+
+        // Apply the volume to the BGMPlayer
+        BGMPlayer.getInstance(this).setVolume(bgmVolume);
+        BGMPlayer.getInstance(this).start();
 
         // Initialize Firebase Auth and Database
         mAuth = FirebaseAuth.getInstance();
@@ -134,16 +153,16 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog dialog = builder.create();
 
                 // Set up the buttons
-                Button backButton = dialogView.findViewById(R.id.backButton);
+//                Button backButton = dialogView.findViewById(R.id.backButton);
                 Button btnCreateRoom = dialogView.findViewById(R.id.button1);
                 Button btnJoinRoom = dialogView.findViewById(R.id.button2);
 
-                backButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        dialog.dismiss(); // Dismiss the dialog
-                    }
-                });
+//                backButton.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        dialog.dismiss(); // Dismiss the dialog
+//                    }
+//                });
                 // create room
                 btnCreateRoom.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -205,6 +224,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Button btnBot = findViewById(R.id.test_btn);
+        btnBot.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, BotDeployActivity.class);
+                startActivity(intent);
+            }
+        });
+
         ImageButton btnSettings = findViewById(R.id.btn_settings);
         btnSettings.setOnClickListener(v -> showSettingsDialog());
     }
@@ -226,11 +255,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettingsDialog() {
+        // Load saved volume level
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        bgmVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
+
         Dialog settingsDialog = new Dialog(this);
         settingsDialog.setContentView(R.layout.dialog_settings);
         settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
-        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_volume);
+        SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_value);
         seekBarVolume.setProgress(bgmVolume);
 
         seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -238,6 +271,11 @@ public class MainActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 float volume = progress / 100f; // Convert progress to a float between 0.0 and 1.0
                 BGMPlayer.getInstance(MainActivity.this).setVolume(volume);
+
+                // Save the volume level in SharedPreferences
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt(KEY_BGM_VOLUME, progress);
+                editor.apply();
             }
 
             @Override
@@ -247,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_how_to_play);
+        Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_howToPlay);
         btnHowToPlay.setOnClickListener(v -> {
             // Handle "How to Play" button click here
             // showHowToPlayDialog();
