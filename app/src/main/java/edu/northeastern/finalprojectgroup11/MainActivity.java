@@ -127,9 +127,6 @@ public class MainActivity extends AppCompatActivity {
             currentUID = currentUser.getUid();
             setUserOnlineStatus(currentUID, true);
         }
-        if (currentUID == null) {
-            showNetworkErrorDialog();
-        }
         btnLogin = findViewById(R.id.login_btn);
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -374,6 +371,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                showNetworkErrorDialog();
                 Log.e(TAG, "Failed to check user status: " + error.getMessage());
             }
         });
