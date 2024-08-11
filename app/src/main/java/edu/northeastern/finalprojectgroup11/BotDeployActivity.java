@@ -69,12 +69,9 @@ private int bgmVolume = 50; // Default volume (50% of max volume)
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bot_deploy);
 
-        // Load the saved volume
-        Intent intent = getIntent();
-        int volume = Integer.parseInt(intent.getStringExtra("volume"));
-
         // Apply the volume to the BGMPlayer
-        BGMPlayer2.getInstance(this).setVolume(volume);
+        BGMPlayer2.getInstance(this).setVolume(bgmVolume);
+        BGMPlayer2.getInstance(this).start();
 
         handler = new Handler(Looper.getMainLooper()); // for delay
 
@@ -202,16 +199,16 @@ private int bgmVolume = 50; // Default volume (50% of max volume)
     }
 
     private void showSettingsDialog() {
+        // Load saved volume level
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        int savedVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
-        float volume = savedVolume / 100f;
+        bgmVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
 
         Dialog settingsDialog = new Dialog(this);
         settingsDialog.setContentView(R.layout.dialog_settings);
         settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
         SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_value);
-        seekBarVolume.setProgress((int) volume);
+        seekBarVolume.setProgress(bgmVolume);
 
         seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -220,7 +217,6 @@ private int bgmVolume = 50; // Default volume (50% of max volume)
                 BGMPlayer2.getInstance(BotDeployActivity.this).setVolume(volume);
 
                 // Save the volume level in SharedPreferences
-                SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putInt(KEY_BGM_VOLUME, progress);
                 editor.apply();

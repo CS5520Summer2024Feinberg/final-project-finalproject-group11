@@ -26,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.Random;
 
+import edu.northeastern.finalprojectgroup11.Music.BGMPlayer;
 import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
 
 
@@ -76,13 +77,6 @@ public class BotBattleActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bot_battle);
-
-        // Load the saved volume
-        Intent intent = getIntent();
-        int volume = Integer.parseInt(intent.getStringExtra("volume"));
-
-        // Apply the volume to the BGMPlayer
-        BGMPlayer2.getInstance(this).setVolume(volume);
 
         Button btnLaunch = findViewById(R.id.buttonLaunch);
         Button btnQuit = findViewById(R.id.buttonQuit);
@@ -265,16 +259,16 @@ public class BotBattleActivity extends AppCompatActivity {
     }
 
     private void showSettingsDialog() {
+        // Load saved volume level
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        int savedVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
-        float volume = savedVolume / 100f;
+        bgmVolume = sharedPreferences.getInt(KEY_BGM_VOLUME, 50); // Default to 50 if not set
 
         Dialog settingsDialog = new Dialog(this);
         settingsDialog.setContentView(R.layout.dialog_settings);
         settingsDialog.getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
         SeekBar seekBarVolume = settingsDialog.findViewById(R.id.seekBar_value);
-        seekBarVolume.setProgress((int) volume);
+        seekBarVolume.setProgress(bgmVolume);
 
         seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -283,7 +277,6 @@ public class BotBattleActivity extends AppCompatActivity {
                 BGMPlayer2.getInstance(BotBattleActivity.this).setVolume(volume);
 
                 // Save the volume level in SharedPreferences
-                SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putInt(KEY_BGM_VOLUME, progress);
                 editor.apply();
