@@ -6,11 +6,14 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -47,6 +50,7 @@ import java.time.ZoneOffset;
 import java.util.Random;
 
 import android.widget.LinearLayout;
+import android.widget.VideoView;
 
 import edu.northeastern.finalprojectgroup11.Music.BGMPlayer;
 
@@ -75,6 +79,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        // Background video
+//        VideoView videoView = findViewById(R.id.videoView);
+//        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.background);
+//        videoView.setVideoURI(uri);
+//        videoView.start();
+//        videoView.setOnPreparedListener(mp -> {
+//            mp.setLooping(true);
+//            mp.setVolume(0, 0);
+//        });
 
         // Apply the volume to the BGMPlayer
         BGMPlayer.getInstance(this).setVolume(bgmVolume);
