@@ -34,6 +34,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -629,6 +631,7 @@ public class BattleActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        updateResult(false);
                         navigateToMain();
                     }
                 })
@@ -647,6 +650,7 @@ public class BattleActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        updateResult(true);
                         navigateToMain();
                     }
                 })
@@ -655,6 +659,31 @@ public class BattleActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void updateResult(boolean win) {
+        String resultType = win ? "win" : "loss";
+        DatabaseReference resultRef = firebaseDatabase.getReference("users").child(UID).child(resultType);
+        resultRef.runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                Integer currentValue = mutableData.getValue(Integer.class);
+                if (currentValue == null) {
+                    mutableData.setValue(1); // Set to 1 if null (first win or loss)
+                } else {
+                    mutableData.setValue(currentValue + 1); // Increment the current value
+                }
+                return Transaction.success(mutableData); // Transaction success
+            }
+
+            @Override
+            public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+                if (committed) {
+                    Log.d(TAG, "updateResult Transaction committed. " + resultType + " updated successfully.");
+                } else {
+                    Log.e(TAG, "updateResult Transaction failed: " + databaseError.getMessage());
+                }
+            }
+        });
+    }
 
     private void navigateToMain() {
         Intent intent = new Intent(BattleActivity.this, MainActivity.class);
