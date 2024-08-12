@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="16dp"
-    android:background="#97C0FB" >
+    android:background="#F4F4F4">
 
     <ImageView
         android:layout_width="272dp"
@@ -27,29 +27,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="When you select a position on the board, two outcomes are possible:"
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:gravity="center"
-        android:paddingTop="4dp"
-        android:paddingHorizontal="16dp"
-        android:lineSpacingMultiplier="1.2"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="• Numbers indicate the total mines in the eight surrounding cells."
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:gravity="center"
-        android:paddingTop="4dp"
-        android:paddingHorizontal="16dp"
-        android:lineSpacingMultiplier="1.2"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="• A black mine symbol means you've uncovered an opponent's mine."
+        android:text="Number indicates the amount of mines within the surrounding grids."
         android:textSize="18sp"
         android:textColor="@android:color/black"
         android:gravity="center"
@@ -65,7 +43,7 @@
         android:paddingHorizontal="16dp"
         android:paddingTop="4dp"
         android:paddingBottom="24dp"
-        android:text="The game ends when all mines are found, or the rounds are exhausted. The player who finds the most mines wins. "
+        android:text="The player who finds the most mines wins. "
         android:textColor="@android:color/black"
         android:textSize="18sp" />
 

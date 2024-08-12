@@ -310,6 +310,7 @@ public class BotBattleActivity extends AppCompatActivity {
         });
 
         Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_howToPlay);
+        btnHowToPlay.setVisibility(View.GONE);
         btnHowToPlay.setOnClickListener(v -> {
             // Handle "How to Play" button click here
             // showHowToPlayDialog();

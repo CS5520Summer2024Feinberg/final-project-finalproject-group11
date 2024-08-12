@@ -5,35 +5,29 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="16dp"
-    android:background="#97C0FB" >
+    android:background="#F4F4F4">
 
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/tutorial_step_1" />
+        android:src="@drawable/title" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome to the BattleMine!"
+        android:text="Welcome to BattleMine!"
         android:textSize="24sp"
+        android:textStyle="bold"
         android:textColor="@android:color/black"
         android:gravity="center"
         android:paddingTop="10dp" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="This tutorial will guide you on how to play our game."
+        android:text="Swipe left to continue >>"
         android:textSize="20sp"
-        android:textColor="@android:color/black"
-        android:gravity="center"
-        android:paddingTop="5dp"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Swipe left to see the next step >>"
-        android:textSize="20sp"
-        android:textColor="@android:color/white"
+        android:textColor="@android:color/darker_gray"
         android:gravity="center"
         android:paddingTop="10dp"/>
 

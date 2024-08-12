@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="16dp"
-    android:background="#97C0FB" >
+    android:background="#F4F4F4" >
 
     <TextView
         android:layout_width="match_parent"
@@ -21,9 +21,9 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="You can review this tutorial in the settings."
+        android:text="Review this tutorial in the settings."
         android:textSize="20sp"
-        android:textColor="@android:color/white"
+        android:textColor="@android:color/darker_gray"
         android:gravity="center"
         android:paddingHorizontal="16dp"
         android:paddingBottom="24dp"
