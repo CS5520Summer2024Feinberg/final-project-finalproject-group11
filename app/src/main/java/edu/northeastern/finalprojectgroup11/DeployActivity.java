@@ -54,6 +54,8 @@ public class DeployActivity extends AppCompatActivity {
     private String opponentUID;
     private DatabaseReference roomRef;
     Button btnReady;
+    Button btnRandom;
+    Button btnReset;
 
     private ValueEventListener bothReady;
     private ValueEventListener opponentStateListener;
@@ -124,8 +126,8 @@ public class DeployActivity extends AppCompatActivity {
         mineLeftextView = findViewById(R.id.mineLeftTextView);
         countdownTextView = findViewById(R.id.countdownTextView);
         btnReady = findViewById(R.id.buttonReady);
-        Button btnRandom = findViewById(R.id.buttonRandom);
-        Button btnReset = findViewById(R.id.buttonReset);
+        btnRandom = findViewById(R.id.buttonRandom);
+        btnReset = findViewById(R.id.buttonReset);
         Button btnQuit = findViewById(R.id.buttonQuit);
 
 
@@ -311,7 +313,11 @@ public class DeployActivity extends AppCompatActivity {
     // Action when the ready button is clicked
     public void onReadyClick() {
         if (board.isDeployReady()) {
-            btnReady.setBackgroundColor(Color.parseColor("1EBD33"));
+            btnReady.setBackgroundColor(Color.parseColor("#1EBD33"));
+            btnReset.setEnabled(false);
+            btnRandom.setEnabled(false);
+            btnReady.setEnabled(false);
+
             // Cancel the timer
             if (countDownTimer != null) {
                 countDownTimer.cancel();
@@ -566,7 +572,7 @@ public class DeployActivity extends AppCompatActivity {
                             Log.e("DeployActivity", "Failed to store opponent's board.");
                         }
 
-                        Toast.makeText(DeployActivity.this, "game should start.", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(DeployActivity.this, "game should start.", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(DeployActivity.this, BattleActivity.class);
                         intent.putExtra("roomCode",roomCode); // Pass the room code into new activity
                         intent.putExtra("roomType", roomType); // Pass the room type (public/private) into new activity

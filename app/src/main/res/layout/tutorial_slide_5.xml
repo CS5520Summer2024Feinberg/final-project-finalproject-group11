@@ -17,6 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Battle Phase"
+        android:layout_marginBottom="30dp"
         android:textSize="24sp"
         android:textColor="@android:color/black"
         android:gravity="center"
@@ -27,8 +28,8 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Number indicates the amount of mines within the surrounding grids."
-        android:textSize="18sp"
+        android:text="Player who hit more mine win\n"
+        android:textSize="20sp"
         android:textColor="@android:color/black"
         android:gravity="center"
         android:paddingTop="4dp"
@@ -40,10 +41,10 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:lineSpacingMultiplier="1.2"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="20dp"
         android:paddingTop="4dp"
         android:paddingBottom="24dp"
-        android:text="The player who finds the most mines wins. "
+        android:text="Number indicates the amount of mines within the surrounding grids."
         android:textColor="@android:color/black"
         android:textSize="18sp" />
 

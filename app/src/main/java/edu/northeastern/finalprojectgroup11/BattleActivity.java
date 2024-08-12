@@ -694,7 +694,7 @@ public class BattleActivity extends AppCompatActivity {
 
     // Round timer
     private void setRoundTimer() {        // Initialize the countdown timer for 10 seconds
-        countDownTimer = new CountDownTimer(10000, 1000) {
+        countDownTimer = new CountDownTimer(15300, 1000) {
 
             int clockIndex = 0;
 
