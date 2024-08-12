@@ -57,7 +57,7 @@ public class BotDeployActivity extends AppCompatActivity {
 
     private CountDownTimer countDownTimer;
     private TextView countdownTextView; // TextView to show the countdown
-
+    private Button btnReady;
 
     private TextView mineLeftextView;
     private FirebaseDatabase firebaseDatabase;
@@ -90,7 +90,7 @@ public class BotDeployActivity extends AppCompatActivity {
 
         mineLeftextView = findViewById(R.id.mineLeftTextView);
         countdownTextView = findViewById(R.id.countdownTextView);
-        Button btnReady = findViewById(R.id.buttonReady);
+        btnReady = findViewById(R.id.buttonReady);
         Button btnRandom = findViewById(R.id.buttonRandom);
         Button btnReset = findViewById(R.id.buttonReset);
         Button btnQuit = findViewById(R.id.buttonQuit);
@@ -101,7 +101,7 @@ public class BotDeployActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         UID = mAuth.getCurrentUser().getUid();
         // Initialize the countdown timer for 10 seconds
-        countDownTimer = new CountDownTimer(30000, 1000) {
+        countDownTimer = new CountDownTimer(30800, 1000) {
             public void onTick(long millisUntilFinished) {
                 // Update the countdown text each second
                 countdownTextView.setText("" + millisUntilFinished / 1000);
@@ -282,6 +282,7 @@ public class BotDeployActivity extends AppCompatActivity {
     // Action when the ready button is clicked
     public void onReadyClick() {
         if (board.isDeployReady()) {
+            btnReady.setBackgroundColor(Color.parseColor("#27DB3F"));
             // Cancel the timer
             if (countDownTimer != null) {
                 countDownTimer.cancel();

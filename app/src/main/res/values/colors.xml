@@ -5,6 +5,7 @@
     <color name="dark_blue">#2980fb</color>
     <color name="light_blue">#97C0FB</color>
     <color name="button_red">#D92424</color>
+    <color name="button_red_ready">#1EBD33</color>
     <color name="button_three">#335A9E</color>
     <color name="button_main">#335A9E</color>
     <color name="play_background">#F4F4F4</color>

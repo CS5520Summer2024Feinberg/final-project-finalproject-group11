@@ -74,7 +74,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="60dp"
         android:layout_marginBottom="80dp"
-        android:backgroundTint="@color/button_red"
+        android:background="@color/button_red"
         android:text="Ready"
         android:textColor="#FFFFFF"
         android:textSize="20dp"

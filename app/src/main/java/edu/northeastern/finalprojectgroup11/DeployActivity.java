@@ -148,7 +148,7 @@ public class DeployActivity extends AppCompatActivity {
         roomRef = firebaseDatabase.getReference(roomType).child(roomCode);
 
         // Initialize the countdown timer for 10 seconds
-        countDownTimer = new CountDownTimer(20000, 1000) {
+        countDownTimer = new CountDownTimer(30900, 1000) {
             public void onTick(long millisUntilFinished) {
                 // Update the countdown text each second
                 countdownTextView.setText("" + millisUntilFinished / 1000);
@@ -311,7 +311,7 @@ public class DeployActivity extends AppCompatActivity {
     // Action when the ready button is clicked
     public void onReadyClick() {
         if (board.isDeployReady()) {
-
+            btnReady.setBackgroundColor(Color.parseColor("1EBD33"));
             // Cancel the timer
             if (countDownTimer != null) {
                 countDownTimer.cancel();

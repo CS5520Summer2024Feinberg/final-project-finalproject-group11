@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
-        android:text="Player"
+        android:text="Your Board"
         android:textSize="23dp"
         android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
@@ -129,7 +129,7 @@
         android:id="@+id/botNameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Bot"
+        android:text="Opponent"
         android:textSize="20dp"
         android:textColor="#FF000000"
         app:layout_constraintBottom_toBottomOf="@id/smallMineTextView"
@@ -184,29 +184,31 @@
 
     <Button
         android:id="@+id/buttonLaunch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_marginStart="12dp"
         android:layout_marginTop="64dp"
         android:backgroundTint="@color/button_red"
         android:padding="0dp"
         android:text="Launch"
         android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle=""
+        android:textSize="15sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.321"
         app:layout_constraintStart_toEndOf="@id/gridLayoutMyMine"
         app:layout_constraintTop_toBottomOf="@id/guideline_bottom" />
 
     <Button
         android:id="@+id/buttonQuit"
-        android:layout_width="wrap_content"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="140dp"
         android:backgroundTint="@color/button_three"
         android:text="Quit"
         android:textColor="#FFFFFF"
-        android:textSize="16sp"
+        android:textSize="14sp"
         app:layout_constraintStart_toStartOf="@id/buttonLaunch"
+        app:layout_constraintEnd_toEndOf="@id/buttonLaunch"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_bottom_small"
         app:layout_constraintTop_toBottomOf="@id/buttonLaunch" />
 
     <androidx.constraintlayout.widget.Guideline

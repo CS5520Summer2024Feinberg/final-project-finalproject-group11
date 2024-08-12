@@ -70,7 +70,7 @@ public class BattleActivity extends AppCompatActivity {
     private androidx.gridlayout.widget.GridLayout botGridLayout;
     private Handler handler; // Handler for managing delays
     private boolean myTurn;
-    private final int round = 5;
+    private final int round = 15;
     private int myRoundLeft = round;
     private int botRoundLeft = round;
 

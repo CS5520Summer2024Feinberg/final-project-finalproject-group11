@@ -43,10 +43,9 @@ import edu.northeastern.finalprojectgroup11.Music.BGMPlayer;
 import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
 
 
-// TODO:  step left, winner checking
 // icon for mine, misses(step left) on both side, timer, dialog pop up, link quit with back
 public class BotBattleActivity extends AppCompatActivity {
-    private final int botDelay = 1000;
+    private final int botDelay = 800;
     private final int boardRows = 10;
     private final int boardCols = 10;
     private GameBoard myBoard;
@@ -124,7 +123,7 @@ public class BotBattleActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, callback);
 
         // Initialize the countdown timer for 10 seconds
-        countDownTimer = new CountDownTimer(15000, 1000) {
+        countDownTimer = new CountDownTimer(15800, 1000) {
             public void onTick(long millisUntilFinished) {
                 // Update the countdown text each second
                 countdownTextView.setText("" + millisUntilFinished / 1000);
@@ -249,15 +248,15 @@ public class BotBattleActivity extends AppCompatActivity {
 
                 myGridLayout.addView(button);
 
-                 // Set click action, click on small board for test
-                final int row = i;
-                final int col = j;
-                button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        revealCell(row, col, myBoard, myGridLayout, 10, true);
-                    }
-                });
+//                 // Set click action, click on small board for test
+//                final int row = i;
+//                final int col = j;
+//                button.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        revealCell(row, col, myBoard, myGridLayout, 10, true);
+//                    }
+//                });
             }
         }
 
@@ -454,7 +453,7 @@ public class BotBattleActivity extends AppCompatActivity {
         // Introduce a delay before the bot makes its move
         Random random = new Random();
         //int randomDelay = random.nextInt(2000) + 1500;
-        int randomDelay = random.nextInt(100) + botDelay; // set low for testing
+        int randomDelay = random.nextInt(300) + botDelay; // set low for testing
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
