@@ -62,6 +62,9 @@ public class BotBattleActivity extends AppCompatActivity {
     private CountDownTimer countDownTimer;
     private TextView countdownTextView; // TextView to show the countdown
 
+    private View bigOutline;
+    private View smallOutline;
+
     private TextView bigMineTextView;
     private TextView bigRoundLeftIconTextView;
     private TextView smallMineTextView;
@@ -103,8 +106,9 @@ public class BotBattleActivity extends AppCompatActivity {
         bigRoundLeftIconTextView.setText(String.valueOf(round));
         smallRoundLeftTextView.setText(String.valueOf(round));
 
-        ImageButton btnSettings = findViewById(R.id.btn_settings);
-        btnSettings.setOnClickListener(v -> showSettingsDialog());
+        bigOutline = findViewById(R.id.backgroundSquareBig);
+        smallOutline = findViewById(R.id.backgroundSquareSmall);
+
 
         handler = new Handler(Looper.getMainLooper());
         countdownTextView = findViewById(R.id.countdownTextView); // Assuming you have this in your layout
@@ -151,6 +155,7 @@ public class BotBattleActivity extends AppCompatActivity {
 
         // Start the countdown when the activity is created
         countDownTimer.start();
+        bigOutline.setBackgroundColor(Color.parseColor("#2AC33E"));
 
         // Big Board
         // Set up Bot's board
@@ -415,6 +420,7 @@ public class BotBattleActivity extends AppCompatActivity {
         if (myTurn && lastSelectedButton != null) {
             // Stop the timer
             countDownTimer.cancel();
+            bigOutline.setBackgroundColor(Color.parseColor("#646464"));
 
             // reveal the cell selected
             revealCell(selectedRow, selectedCol, botBoard, botGridLayout, 20, false);
@@ -436,6 +442,7 @@ public class BotBattleActivity extends AppCompatActivity {
 
                 // Start Counter and let opponent move
                 countDownTimer.start();
+                smallOutline.setBackgroundColor(Color.parseColor("#2AC33E"));
                 botMove();
             }
         }
@@ -474,7 +481,11 @@ public class BotBattleActivity extends AppCompatActivity {
 
                     setGridLayoutEnabled(true);
                     countDownTimer.cancel();
+                    smallOutline.setBackgroundColor(Color.parseColor("#646464"));
+
                     countDownTimer.start();
+                    bigOutline.setBackgroundColor(Color.parseColor("#2AC33E"));
+
                 }
 
             }

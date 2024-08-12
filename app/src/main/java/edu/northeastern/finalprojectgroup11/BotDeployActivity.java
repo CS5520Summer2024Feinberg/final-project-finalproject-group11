@@ -95,9 +95,6 @@ public class BotDeployActivity extends AppCompatActivity {
         Button btnReset = findViewById(R.id.buttonReset);
         Button btnQuit = findViewById(R.id.buttonQuit);
 
-        ImageButton btnSettings = findViewById(R.id.btn_settings);
-        btnSettings.setOnClickListener(v -> showSettingsDialog());
-        firebaseDatabase = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         UID = mAuth.getCurrentUser().getUid();
         // Initialize the countdown timer for 10 seconds

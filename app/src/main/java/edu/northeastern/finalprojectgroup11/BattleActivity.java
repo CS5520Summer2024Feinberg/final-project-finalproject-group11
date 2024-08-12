@@ -60,6 +60,9 @@ public class BattleActivity extends AppCompatActivity {
     private ValueEventListener opponentStateListener;
     private ValueEventListener meGetHitListener;
 
+    private View bigOutline;
+    private View smallOutline;
+
     private final int botDelay = 0;
     private final int boardRows = 10;
     private final int boardCols = 10;
@@ -169,6 +172,10 @@ public class BattleActivity extends AppCompatActivity {
         myGridLayout = findViewById(R.id.gridLayoutMyMine);
         bigCountdownIcon = findViewById(R.id.bigCountdownIcon);
 
+        // outline
+        bigOutline = findViewById(R.id.backgroundSquareBig);
+        smallOutline = findViewById(R.id.backgroundSquareSmall);
+
         // Set up both board first
         myBoard = GameBoardManager.getGameBoard(); // set my board directly from static class
         botBoard = GameBoardManager.getOpponentBoard();
@@ -206,10 +213,15 @@ public class BattleActivity extends AppCompatActivity {
                 // check who start the turn
                 if (myTurn){
                     Toast.makeText(BattleActivity.this, "You start First!", Toast.LENGTH_SHORT).show();
+                    bigOutline.setBackgroundColor(Color.parseColor("#2AC33E"));
+                    smallOutline.setBackgroundColor(Color.parseColor("#646464"));
                     countDownTimer.start();
                     setGridLayoutEnabled(true);
                 } else {
                     Toast.makeText(BattleActivity.this, "Opponent start First!", Toast.LENGTH_SHORT).show();
+                    bigOutline.setBackgroundColor(Color.parseColor("#646464"));
+                    smallOutline.setBackgroundColor(Color.parseColor("#2AC33E"));
+
                     setGridLayoutEnabled(false);
                 }
 
@@ -745,11 +757,16 @@ public class BattleActivity extends AppCompatActivity {
                 currentTurn = snapshot.getValue(Integer.class);
                 if (Objects.equals(snapshot.getValue(Integer.class), playerPosition)) {
                     myTurn = true;
-                    Toast.makeText(BattleActivity.this, "Your Turn", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(BattleActivity.this, "Your Turn", Toast.LENGTH_SHORT).show();
+                    bigOutline.setBackgroundColor(Color.parseColor("#2AC33E"));
+                    smallOutline.setBackgroundColor(Color.parseColor("#646464"));
+
                     countDownTimer.start();
                     setGridLayoutEnabled(true);
                 } else {
                     myTurn = false;
+                    smallOutline.setBackgroundColor(Color.parseColor("#2AC33E"));
+                    bigOutline.setBackgroundColor(Color.parseColor("#646464"));
                     setGridLayoutEnabled(false);
                     countDownTimer.start();
                 }
