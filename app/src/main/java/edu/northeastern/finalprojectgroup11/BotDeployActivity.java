@@ -245,10 +245,10 @@ public class BotDeployActivity extends AppCompatActivity {
         });
 
         Button btnHowToPlay = settingsDialog.findViewById(R.id.btn_howToPlay);
-        btnHowToPlay.setOnClickListener(v -> {
-            // Handle "How to Play" button click here
-            // showHowToPlayDialog();
-        });
+        btnHowToPlay.setVisibility(View.GONE);
+//        btnHowToPlay.setOnClickListener(v -> {
+//            // Handle "How to Play" button click here
+//        });
 
         settingsDialog.show();
     }

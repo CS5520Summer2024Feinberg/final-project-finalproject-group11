@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="16dp"
-    android:background="#97C0FB" >
+    android:background="#F4F4F4">
 
     <ImageView
         android:layout_width="169dp"
@@ -27,22 +27,11 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="The countdown timer in the upper right corner tracks time left to deploy your mines."
+        android:text="Deploy 10 mines to defend your territory."
         android:textSize="18sp"
         android:textColor="@android:color/black"
         android:gravity="center"
         android:lineSpacingMultiplier="1.2"
-        android:paddingHorizontal="16dp"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="The upper left corner displays the number of mines remaining."
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:gravity="center"
-        android:lineSpacingMultiplier="1.2"
-        android:paddingTop="8dp"
         android:paddingHorizontal="16dp"/>
 
 </LinearLayout>
