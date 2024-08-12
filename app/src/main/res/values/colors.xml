@@ -5,9 +5,15 @@
     <color name="dark_blue">#2980fb</color>
     <color name="light_blue">#97C0FB</color>
     <color name="button_red">#D92424</color>
-    <color name="button_three">#CECECE</color>
-    <color name="play_background">#F2F2F2</color>
+    <color name="button_three">#335A9E</color>
+    <color name="button_main">#335A9E</color>
+    <color name="play_background">#F4F4F4</color>
     <color name="boarder_outline">#646464</color>
+    <color name="custom_accent_color">#335A9E</color>
+    <color name="boarder_check_light">#646464</color>
+    <color name="boarder_check_dark">#646464</color>
+
+
 
 
 

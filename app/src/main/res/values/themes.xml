@@ -7,6 +7,8 @@
 <!--    </style>-->
 
     <style name="Theme.FinalProjectGroup11" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorAccent">@color/custom_accent_color</item>
+
     </style>
 
 </resources>

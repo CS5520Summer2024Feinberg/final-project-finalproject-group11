@@ -46,7 +46,7 @@ import edu.northeastern.finalprojectgroup11.Music.BGMPlayer2;
 // TODO:  step left, winner checking
 // icon for mine, misses(step left) on both side, timer, dialog pop up, link quit with back
 public class BotBattleActivity extends AppCompatActivity {
-    private final int botDelay = 0;
+    private final int botDelay = 1000;
     private final int boardRows = 10;
     private final int boardCols = 10;
     private GameBoard myBoard;
@@ -124,7 +124,7 @@ public class BotBattleActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, callback);
 
         // Initialize the countdown timer for 10 seconds
-        countDownTimer = new CountDownTimer(10000, 1000) {
+        countDownTimer = new CountDownTimer(15000, 1000) {
             public void onTick(long millisUntilFinished) {
                 // Update the countdown text each second
                 countdownTextView.setText("" + millisUntilFinished / 1000);

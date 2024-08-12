@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference roomRef;
     private final int maxRoomCount = 2;
     private ValueEventListener player2Join;
+    private boolean isSearching = false;
 
     private AlertDialog roomDialog;
 
@@ -186,38 +187,41 @@ public class MainActivity extends AppCompatActivity {
         btnPlayOnline.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DatabaseReference roomsRef = firebaseDatabase.getReference(PUBLIC_ROOM);
+                if (!isSearching) {
+                    isSearching = true;
+                    DatabaseReference roomsRef = firebaseDatabase.getReference(PUBLIC_ROOM);
 
-                // Search for a room with only one player (where the game state is "waiting")
-                roomsRef.orderByChild("gameState").equalTo("waiting").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        boolean roomFound = false;
+                    // Search for a room with only one player (where the game state is "waiting")
+                    roomsRef.orderByChild("gameState").equalTo("waiting").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            boolean roomFound = false;
 
-                        for (DataSnapshot roomSnapshot : dataSnapshot.getChildren()) {
-                            String roomKey = roomSnapshot.getKey();
-                            String player2 = roomSnapshot.child("player2").getValue(String.class);
+                            for (DataSnapshot roomSnapshot : dataSnapshot.getChildren()) {
+                                String roomKey = roomSnapshot.getKey();
+                                String player2 = roomSnapshot.child("player2").getValue(String.class);
 
-                            // Check if player2 is null, indicating that the room is joinable
-                            if (player2 == null) {
-                                joinRoomOnline(roomKey);
-                                roomFound = true;
-                                break;
+                                // Check if player2 is null, indicating that the room is joinable
+                                if (player2 == null) {
+                                    joinRoomOnline(roomKey);
+                                    roomFound = true;
+                                    break;
+                                }
+                            }
+
+                            // If no joinable room was found, create a new room
+                            if (!roomFound) {
+                                createRoomOnline();
                             }
                         }
 
-                        // If no joinable room was found, create a new room
-                        if (!roomFound) {
-                            createRoomOnline();
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            // Handle possible errors
+                            Log.e("Firebase", "Error while searching for a room: " + databaseError.getMessage());
                         }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        // Handle possible errors
-                        Log.e("Firebase", "Error while searching for a room: " + databaseError.getMessage());
-                    }
-                });
+                    });
+                }
             }
         });
 
@@ -784,6 +788,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         destroyRoom();
+                        isSearching = false;
                         dialog.cancel();
                     }
                 })

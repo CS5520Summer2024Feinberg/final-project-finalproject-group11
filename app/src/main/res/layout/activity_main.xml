@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#97C0FB"
+    android:background="#F4F4F4"
     tools:context=".MainActivity">
 
 <!--    <VideoView-->
@@ -20,42 +20,37 @@
 <!--        android:layout_alignParentLeft="true"-->
 <!--        android:layout_alignParentRight="true" />-->
 
-    <TextView
-        android:id="@+id/text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:autoSizeMaxTextSize="40sp"
-        android:autoSizeMinTextSize="10sp"
-        android:autoSizeStepGranularity="1sp"
-        android:autoSizeTextType="uniform"
-        android:fontFamily="@font/pixeled"
-        android:text="BATTLE\n   MINE"
-        android:textColor="@android:color/white"
-        android:textSize="40sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.535"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.186" />
+    <!--    <ImageView-->
+<!--        android:id="@+id/mascot_image"-->
+<!--        android:layout_width="241dp"-->
+<!--        android:layout_height="543dp"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:src="@drawable/mineremovebg"-->
+<!--        app:layout_constraintBottom_toTopOf="@+id/play_friend_btn"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/text"-->
+<!--        app:layout_constraintVertical_bias="0.575" />-->
 
     <ImageView
-        android:id="@+id/mascot_image"
-        android:layout_width="241dp"
-        android:layout_height="543dp"
-        android:layout_gravity="center"
-        android:src="@drawable/mineremovebg"
-        app:layout_constraintBottom_toTopOf="@+id/play_friend_btn"
+        android:id="@+id/text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:src="@drawable/title"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.733"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text"
-        app:layout_constraintVertical_bias="0.575" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.3" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/login_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="25dp"
         android:layout_marginStart="8dp"
         android:padding="4dp"
         android:orientation="horizontal"
@@ -96,7 +91,7 @@
         android:id="@+id/btn_settings"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="20dp"
         android:layout_marginEnd="4dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_settings"
@@ -107,15 +102,15 @@
         android:id="@+id/play_friend_btn"
         android:layout_width="201dp"
         android:layout_height="58dp"
+        android:background="@color/button_main"
         android:text="Play With Friend"
-        android:background="@drawable/rectangular_button_dark_blue"
         android:textColor="@android:color/white"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.773" />
+        app:layout_constraintVertical_bias="0.686" />
 
     <Button
         android:id="@+id/play_online_btn"
@@ -128,7 +123,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/play_friend_btn"
-        android:background="@drawable/rectangular_button_dark_blue" />
+        android:background="@color/button_main" />
 
     <Button
         android:id="@+id/test_btn"
@@ -141,7 +136,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/play_online_btn"
-        android:background="@drawable/rectangular_button_dark_blue" />
+        android:background="@color/button_main" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

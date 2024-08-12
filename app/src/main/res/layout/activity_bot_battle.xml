@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5DC"
+    android:background="@color/play_background"
     tools:context=".BotDeployActivity">
 
     <!--    Big Board Here-->
@@ -165,7 +165,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginTop="64dp"
-        android:backgroundTint="#F36A6A"
+        android:backgroundTint="@color/button_red"
         android:padding="0dp"
         android:text="Launch"
         android:textColor="#FFFFFF"
@@ -179,7 +179,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="140dp"
-        android:backgroundTint="#D3D3D3"
+        android:backgroundTint="@color/button_three"
         android:text="Quit"
         android:textColor="#FFFFFF"
         android:textSize="16sp"

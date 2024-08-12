@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5DC"
+    android:background="@color/play_background"
     tools:context=".BotDeployActivity">
 
 
@@ -13,28 +13,30 @@
         android:id="@+id/backgroundSquare"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_margin="0dp"
         android:background="@color/boarder_outline"
-        app:layout_constraintBottom_toBottomOf="@id/guideline_bottom"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/guideline_top"
         app:layout_constraintDimensionRatio="1:1"
-        android:layout_margin="0dp" />
+        app:layout_constraintLeft_toLeftOf="@id/guidelineLeft"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="@id/guidelineRight"
+        app:layout_constraintVertical_bias="0.25"/>
 
 
     <androidx.gridlayout.widget.GridLayout
         android:id="@+id/gridLayoutMinePlacement"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="0dp"
         android:layout_margin="5dp"
+        android:padding="0dp"
         app:alignmentMode="alignBounds"
         app:columnCount="10"
-        app:layout_constraintBottom_toBottomOf="@id/guideline_bottom"
         app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/guideline_top"
+        app:layout_constraintLeft_toLeftOf="@id/guidelineLeft"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="@id/guidelineRight"
+        app:layout_constraintVertical_bias="0.25"
         app:rowCount="10"
         app:useDefaultMargins="false">
         <!-- Dynamically add buttons for the grid cells in the activity -->
@@ -46,14 +48,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.12" />
+        app:layout_constraintGuide_percent="0.13" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_bottom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.6" />
+        app:layout_constraintGuide_percent="0.63" />
 
     <ImageButton
         android:id="@+id/btn_settings"
@@ -70,7 +72,7 @@
         android:id="@+id/buttonReady"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="60dp"
         android:layout_marginBottom="80dp"
         android:backgroundTint="@color/button_red"
         android:text="Ready"
@@ -86,14 +88,15 @@
         app:layout_constraintVertical_bias="0.0" />
 
 
-<!--    this control other two-->
+    <!--    this control other two-->
     <Button
         android:id="@+id/buttonReset"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@color/button_three"
-
         android:text="Reset"
+
+        android:textColor="@color/white"
         android:textSize="15dp"
         app:layout_constraintBottom_toBottomOf="@id/buttonReady"
         app:layout_constraintEnd_toEndOf="parent"
@@ -105,13 +108,14 @@
         android:id="@+id/buttonQuit"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/button_three"
         android:layout_marginTop="15dp"
+        android:background="@color/button_three"
         android:text="Quit"
+        android:textColor="@color/white"
         android:textSize="15dp"
 
-        app:layout_constraintStart_toStartOf="@id/buttonReset"
         app:layout_constraintEnd_toEndOf="@id/buttonReset"
+        app:layout_constraintStart_toStartOf="@id/buttonReset"
         app:layout_constraintTop_toBottomOf="@+id/buttonReset" />
 
     <Button
@@ -119,21 +123,22 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="15dp"
-        android:text="Random"
-        android:textSize="15dp"
-
         android:background="@color/button_three"
-        app:layout_constraintStart_toStartOf="@id/buttonReset"
+        android:text="Random"
+        android:textColor="@color/white"
+        android:textSize="15dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonReset"
         app:layout_constraintEnd_toEndOf="@id/buttonReset"
-        app:layout_constraintBottom_toTopOf="@+id/buttonReset" />
+        app:layout_constraintStart_toStartOf="@id/buttonReset" />
 
 
     <TextView
         android:id="@+id/mineIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="\u26AB"
         android:layout_marginRight="0dp"
+        android:text="\u26AB"
+        android:textColor="#FF000000"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="@id/mineLeftTextView"
         app:layout_constraintEnd_toStartOf="@id/mineLeftTextView" />
@@ -142,23 +147,24 @@
     <TextView
         android:id="@+id/mineLeftTextView"
         android:layout_width="40dp"
-        android:layout_marginBottom="10dp"
         android:layout_height="wrap_content"
-        android:text="10"
+        android:layout_marginEnd="20dp"
         android:gravity="center"
-        android:textSize="30sp"
-        android:layout_marginRight="30dp"
+        android:text="10"
         android:textColor="#FF000000"
-    app:layout_constraintBottom_toTopOf="@id/guideline_top"
-    app:layout_constraintEnd_toStartOf="@+id/guidelineCenterH" />
-
+        android:textSize="30sp"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_top"
+        app:layout_constraintEnd_toStartOf="@+id/guidelineCenterH"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.8" />
 
     <TextView
         android:id="@+id/bigCountdownIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="30dp"
+        android:layout_marginLeft="20dp"
         android:text="⏱️"
+        android:textColor="#FF000000"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="@id/mineLeftTextView"
         app:layout_constraintStart_toEndOf="@+id/guidelineCenterH" />
@@ -169,6 +175,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="2dp"
         android:text="10"
+        android:textColor="@color/black"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="@id/mineLeftTextView"
         app:layout_constraintStart_toEndOf="@+id/bigCountdownIcon" />
@@ -181,5 +188,18 @@
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.5" />
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineLeft"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.03" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineRight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.97" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
