@@ -8,6 +8,17 @@
     android:background="@color/play_background"
     tools:context=".BotDeployActivity">
 
+    <TextView
+        android:id="@+id/playerNameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:text="Player"
+        android:textSize="23dp"
+        android:textColor="#FF000000"
+        app:layout_constraintBottom_toTopOf="@id/guideline_top"
+        app:layout_constraintLeft_toRightOf="@id/guideline_left_small" />
+
     <!--    Big Board Here-->
     <androidx.gridlayout.widget.GridLayout
         android:id="@+id/gridLayoutMinePlacement"
@@ -31,14 +42,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.1" />
+        app:layout_constraintGuide_percent="0.09" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_bottom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.55" />
+        app:layout_constraintGuide_percent="0.59" />
 
     <TextView
         android:id="@+id/mineIcon"
@@ -46,117 +57,129 @@
         android:layout_height="wrap_content"
         android:layout_marginRight="0dp"
         android:text="\u26AB"
-        android:textSize="30sp"
+        android:textSize="23dp"
         android:textColor="#FF000000"
         app:layout_constraintBottom_toBottomOf="@id/bigMineTextView"
         app:layout_constraintEnd_toStartOf="@id/bigMineTextView" />
 
     <TextView
         android:id="@+id/bigMineTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="29dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
         android:layout_marginBottom="10dp"
+        android:layout_marginRight="10dp"
         android:text="10"
-        android:textSize="30sp"
+        android:textSize="23dp"
         android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toStartOf="@id/bigRoundLeftIcon"/>
 
     <TextView
         android:id="@+id/bigCountdownIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="-30dp"
         android:layout_marginBottom="10dp"
-        android:text="T"
-        android:textSize="30sp"
+        android:text="⏱️"
         android:textColor="#FF000000"
+        android:textSize="28sp"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
-        app:layout_constraintStart_toStartOf="@id/guidelineCenterH" />
+        app:layout_constraintEnd_toStartOf="@id/countdownTextView" />
 
     <TextView
         android:id="@+id/countdownTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="29dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginRight="16dp"
         android:layout_marginBottom="10dp"
         android:text="10"
-        android:textSize="30sp"
+        android:gravity="center"
+        android:textSize="23sp"
         android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
-        app:layout_constraintStart_toEndOf="@id/bigCountdownIcon" />
+        app:layout_constraintEnd_toStartOf="@id/mineIcon" />
 
     <TextView
         android:id="@+id/bigRoundLeftIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="70dp"
+        android:layout_marginEnd="20dp"
         android:layout_marginBottom="10dp"
-        android:text="R"
-        android:textSize="30sp"
-        android:textColor="#FF000000"
+        android:text="🔄"
+        android:gravity="center"
+        android:textSize="23dp"
+        android:textColor="#000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
-        app:layout_constraintStart_toStartOf="@id/guidelineCenterH" />
+        app:layout_constraintEnd_toStartOf="@id/btn_settings" />
 
     <TextView
         android:id="@+id/bigRoundLeftIconTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="29dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginStart="2dp"
         android:layout_marginBottom="10dp"
         android:text="10"
-        android:textSize="30sp"
+        android:gravity="center"
+        android:textSize="25dp"
         android:textColor="#FF000000"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintStart_toEndOf="@id/bigRoundLeftIcon" />
 
     <!-- Smaller board here -->
+    <TextView
+        android:id="@+id/botNameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bot"
+        android:textSize="20dp"
+        android:textColor="#FF000000"
+        app:layout_constraintBottom_toBottomOf="@id/smallMineTextView"
+        app:layout_constraintLeft_toLeftOf="@id/gridLayoutMyMine" />
 
     <TextView
         android:id="@+id/smallMineIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginBottom="5dp"
+        android:layout_marginEnd="2dp"
         android:text="\u26AB"
-        android:textSize="25sp"
+        android:textSize="18sp"
         android:textColor="#FF000000"
-        app:layout_constraintBottom_toTopOf="@id/gridLayoutMyMine"
-        app:layout_constraintStart_toStartOf="@id/gridLayoutMyMine" />
+        app:layout_constraintBottom_toBottomOf="@id/smallMineTextView"
+        app:layout_constraintRight_toLeftOf="@id/smallMineTextView" />
 
     <TextView
         android:id="@+id/smallMineTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginEnd="10dp"
         android:text="10"
-        android:textSize="25sp"
+        android:textSize="18sp"
         android:textColor="#FF000000"
-        app:layout_constraintBottom_toBottomOf="@id/smallMineIcon"
-        app:layout_constraintStart_toEndOf="@id/smallMineIcon" />
+        app:layout_constraintBottom_toBottomOf="@id/smallRoundLeftIcon"
+        app:layout_constraintRight_toLeftOf="@id/smallRoundLeftIcon" />
 
     <TextView
         android:id="@+id/smallRoundLeftIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:text="R"
-        android:textSize="25sp"
+        android:layout_marginEnd="2dp"
+        android:text="🔄"
+        android:textSize="18sp"
         android:textColor="#FF000000"
-        app:layout_constraintBottom_toBottomOf="@id/smallMineIcon"
-        app:layout_constraintStart_toEndOf="@id/smallMineTextView" />
+        app:layout_constraintBottom_toBottomOf="@id/smallRoundLeftTextView"
+        app:layout_constraintRight_toLeftOf="@id/smallRoundLeftTextView" />
 
     <TextView
         android:id="@+id/smallRoundLeftTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginRight="10dp"
         android:text="10"
-        android:textSize="25sp"
+        android:textSize="18sp"
         android:textColor="#FF000000"
-        app:layout_constraintBottom_toBottomOf="@id/smallMineIcon"
-        app:layout_constraintStart_toEndOf="@id/smallRoundLeftIcon" />
+        app:layout_constraintTop_toBottomOf="@id/gridLayoutMinePlacement"
+        app:layout_constraintVertical_bias="0.8"
+        app:layout_constraintBottom_toTopOf="@id/gridLayoutMyMine"
+        app:layout_constraintRight_toRightOf="@id/gridLayoutMyMine" />
 
 
     <Button
@@ -191,14 +214,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.62" />
+        app:layout_constraintGuide_percent="0.65" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_bottom_small"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.95" />
+        app:layout_constraintGuide_percent="0.97" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_left_small"
@@ -206,6 +229,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.05" />
+
+
 
     <androidx.gridlayout.widget.GridLayout
         android:id="@+id/gridLayoutMyMine"
